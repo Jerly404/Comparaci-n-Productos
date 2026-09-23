@@ -1,4 +1,21 @@
-// BuscaFono - Luxury Dark & Champagne Gold / Platinum Edition
+// BUSCAPRODUCTOS PERÚ - Luxury Dark & Champagne Gold / Platinum Edition
+
+function loadFavoritesFromStorage() {
+    try {
+        const stored = localStorage.getItem("buscaproductos_favorites");
+        return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveFavoritesToStorage() {
+    try {
+        localStorage.setItem("buscaproductos_favorites", JSON.stringify(state.favorites));
+    } catch (e) {
+        console.error("Error saving favorites:", e);
+    }
+}
 
 const state = {
     stores: [],
@@ -8,7 +25,16 @@ const state = {
     storeBreakdown: {},
     loading: false,
     events: [],
-    activeView: "comparator",
+    activeView: "comparator", // 'comparator', 'groceries', 'food', 'events'
+    paymentFilter: "all", // 'all', 'any_card', 'store_cards'
+    verdictFilter: "all", // 'all', 'minimo', 'buen_precio'
+    pickupCajamarcaOnly: false,
+    compareItems: [], // array of up to 2 items for side-by-side
+    favorites: loadFavoritesFromStorage(),
+    groceries: [],
+    groceriesStats: null,
+    groceriesCategory: "todas",
+    groceriesQuery: "",
     foodCategory: "todas",
     foodPlatform: "todas",
     foodLocation: "todas",
@@ -28,18 +54,53 @@ const submitBtn = document.getElementById("submit-btn");
 const sortSelect = document.getElementById("sort-select");
 const toggleAccessories = document.getElementById("toggle-accessories");
 const toggleRefurbished = document.getElementById("toggle-refurbished");
+const toggleCajamarcaPickup = document.getElementById("toggle-cajamarca-pickup");
 const storeTogglesContainer = document.getElementById("store-toggles");
 const selectAllStoresBtn = document.getElementById("select-all-stores");
 
+// Top Nav & Views
 const tabComparator = document.getElementById("tab-comparator");
+const tabGroceries = document.getElementById("tab-groceries");
 const tabFood = document.getElementById("tab-food");
 const tabEvents = document.getElementById("tab-events");
 const linkToEvents = document.getElementById("link-to-events");
+
 const comparatorView = document.getElementById("comparator-view");
+const groceriesView = document.getElementById("groceries-view");
 const foodView = document.getElementById("food-view");
 const eventsView = document.getElementById("events-view");
 const eventsGrid = document.getElementById("events-grid");
 const heroCountdownPill = document.getElementById("hero-countdown-pill");
+
+// Favorites & Badges
+const openFavoritesBtn = document.getElementById("open-favorites-btn");
+const favCountBadge = document.getElementById("fav-count-badge");
+const favoritesModal = document.getElementById("favorites-modal");
+const closeFavoritesModal = document.getElementById("close-favorites-modal");
+const closeFavoritesBtnFooter = document.getElementById("close-favorites-btn-footer");
+const favoritesList = document.getElementById("favorites-list");
+const clearAllFavoritesBtn = document.getElementById("clear-all-favorites");
+const favModalCounter = document.getElementById("fav-modal-counter");
+
+// Side-by-Side Comparator
+const compareTray = document.getElementById("compare-tray");
+const compareTrayPreviews = document.getElementById("compare-tray-previews");
+const compareTrayText = document.getElementById("compare-tray-text");
+const compareTrayBtn = document.getElementById("compare-tray-btn");
+const compareTrayClear = document.getElementById("compare-tray-clear");
+const compareModal = document.getElementById("compare-modal");
+const closeCompareModal = document.getElementById("close-compare-modal");
+const compareModalContent = document.getElementById("compare-modal-content");
+
+// Groceries & Supermarkets
+const groceriesSearchInput = document.getElementById("groceries-search-input");
+const groceriesClearBtn = document.getElementById("groceries-clear-btn");
+const groceriesGrid = document.getElementById("groceries-grid");
+const groceriesCountBadge = document.getElementById("groceries-count-badge");
+const basketTotalMetro = document.getElementById("basket-total-metro");
+const basketTotalTottus = document.getElementById("basket-total-tottus");
+const basketTotalPlazavea = document.getElementById("basket-total-plazavea");
+const basketMaxSaving = document.getElementById("basket-max-saving");
 
 // Black Friday countdown elements
 const bfDays = document.getElementById("bf-days");
@@ -82,9 +143,13 @@ const foodGridTitle = document.getElementById("food-grid-title");
 const DEFAULT_IMAGE_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='64' height='64' fill='none' stroke='%238c734b' stroke-width='1.5'%3E%3Crect x='5' y='2' width='14' height='20' rx='2'/%3E%3Cline x1='12' y1='18' x2='12' y2='18.01' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E";
 
 document.addEventListener("DOMContentLoaded", async () => {
-    await Promise.all([fetchStores(), fetchEvents(), fetchFoodDeals()]);
+    updateFavoritesBadge();
+    await Promise.all([fetchStores(), fetchEvents(), fetchFoodDeals(), fetchGroceries()]);
     setupEventListeners();
     setupFoodEventListeners();
+    setupGroceriesEventListeners();
+    setupFavoritesEventListeners();
+    setupCompareEventListeners();
     startCountdownTimers();
 });
 
@@ -151,6 +216,9 @@ function renderStoreToggles() {
 function setupEventListeners() {
     // Tab switching
     tabComparator.addEventListener("click", () => switchView("comparator"));
+    if (tabGroceries) {
+        tabGroceries.addEventListener("click", () => switchView("groceries"));
+    }
     if (tabFood) {
         tabFood.addEventListener("click", () => switchView("food"));
     }
@@ -202,6 +270,37 @@ function setupEventListeners() {
         if (searchInput.value.trim()) performSearch();
     });
 
+    if (toggleCajamarcaPickup) {
+        toggleCajamarcaPickup.addEventListener("change", () => {
+            state.pickupCajamarcaOnly = toggleCajamarcaPickup.checked;
+            if (searchInput.value.trim()) performSearch();
+        });
+    }
+
+    // Payment Filter Buttons
+    document.querySelectorAll(".payment-filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".payment-filter-btn").forEach(b => {
+                b.className = "payment-filter-btn px-2.5 py-1 rounded-md border text-xs font-medium transition bg-obsidian-950 border-obsidian-700 text-platinum-400 hover:text-gold-200 hover:border-gold-400/30";
+            });
+            btn.className = "payment-filter-btn px-2.5 py-1 rounded-md border text-xs font-medium transition active-pay-pill bg-obsidian-850 border-gold-400/50 text-gold-300 shadow-sm";
+            state.paymentFilter = btn.dataset.pay;
+            if (searchInput.value.trim()) performSearch();
+        });
+    });
+
+    // Verdict Radar Filter Buttons
+    document.querySelectorAll(".verdict-filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".verdict-filter-btn").forEach(b => {
+                b.className = "verdict-filter-btn px-2.5 py-1 rounded-md border text-xs font-medium transition bg-obsidian-950 border-obsidian-700 text-platinum-400 hover:text-gold-200 hover:border-gold-400/30";
+            });
+            btn.className = "verdict-filter-btn px-2.5 py-1 rounded-md border text-xs font-medium transition active-verdict-pill bg-obsidian-850 border-gold-400/50 text-gold-300 shadow-sm";
+            state.verdictFilter = btn.dataset.verdict;
+            if (searchInput.value.trim()) performSearch();
+        });
+    });
+
     selectAllStoresBtn.addEventListener("click", () => {
         state.stores.forEach(s => state.selectedStores.add(s.id));
         renderStoreToggles();
@@ -217,16 +316,22 @@ function switchView(viewName) {
     const inactiveTab = "px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition text-platinum-400 hover:text-gold-200 hover:bg-obsidian-850 flex items-center gap-1.5 whitespace-nowrap";
 
     comparatorView.classList.add("hidden");
+    if (groceriesView) groceriesView.classList.add("hidden");
     if (foodView) foodView.classList.add("hidden");
     eventsView.classList.add("hidden");
 
     tabComparator.className = inactiveTab;
+    if (tabGroceries) tabGroceries.className = inactiveTab;
     if (tabFood) tabFood.className = inactiveTab;
     tabEvents.className = inactiveTab;
 
     if (viewName === "comparator") {
         comparatorView.classList.remove("hidden");
         tabComparator.className = activeTab;
+    } else if (viewName === "groceries") {
+        if (groceriesView) groceriesView.classList.remove("hidden");
+        if (tabGroceries) tabGroceries.className = activeTab;
+        if (!state.groceries || state.groceries.length === 0) fetchGroceries();
     } else if (viewName === "food") {
         if (foodView) foodView.classList.remove("hidden");
         if (tabFood) tabFood.className = activeTab;
@@ -392,6 +497,15 @@ async function performSearch() {
         include_refurbished: toggleRefurbished.checked
     });
     if (storesParam) params.append("stores", storesParam);
+    if (state.paymentFilter && state.paymentFilter !== "all") {
+        params.append("payment", state.paymentFilter);
+    }
+    if (state.verdictFilter && state.verdictFilter !== "all") {
+        params.append("verdict", state.verdictFilter);
+    }
+    if (state.pickupCajamarcaOnly) {
+        params.append("pickup_cajamarca", "true");
+    }
 
     try {
         const resp = await fetch(`/api/search?${params.toString()}`);
@@ -445,9 +559,16 @@ function renderResults() {
         const diff = state.stats.average_price > cheapest.price 
             ? Math.round(state.stats.average_price - cheapest.price) 
             : 0;
+        const isFav = isFavorite(cheapest);
+        const isCompared = state.compareItems.some(p => p.id === cheapest.id);
 
         bestDealContainer.innerHTML = `
-            <div class="best-deal-luxury rounded-xl p-3.5 sm:p-5 flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-5 h-full">
+            <div class="best-deal-luxury rounded-xl p-3.5 sm:p-5 flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-5 h-full relative">
+                <!-- Favorite button on Spotlight -->
+                <button type="button" class="spotlight-fav-btn absolute top-3 right-3 text-sm p-1.5 rounded-lg bg-obsidian-950/80 border border-obsidian-700/80 hover:border-gold-400/50 transition z-10" title="Guardar en favoritos">
+                    <i class="${isFav ? 'fa-solid text-rose-500' : 'fa-regular text-platinum-400 hover:text-rose-400'} fa-heart"></i>
+                </button>
+
                 <div class="w-24 h-24 xs:w-28 xs:h-28 sm:w-36 sm:h-36 flex-shrink-0 bg-obsidian-950 rounded-lg p-2.5 border border-obsidian-700/80 flex items-center justify-center">
                     <img 
                         src="${cheapest.image_url || DEFAULT_IMAGE_FALLBACK}" 
@@ -470,6 +591,11 @@ function renderResults() {
                             <span class="text-[9px] sm:text-[10px] uppercase tracking-wider text-platinum-400 bg-obsidian-950 border border-obsidian-700 px-2 py-0.5 rounded">
                                 ${cheapest.condition}
                             </span>
+                            ${cheapest.deal_verdict === "Mínimo Histórico" ? `
+                                <span class="text-[9px] font-bold text-amber-300 bg-amber-950/80 border border-amber-500/50 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                    🔥 Mínimo Histórico
+                                </span>
+                            ` : ''}
                         </div>
 
                         <h2 class="text-sm sm:text-base lg:text-lg font-semibold text-white leading-snug mt-1.5">
@@ -491,22 +617,49 @@ function renderResults() {
                                 </span>
                             ` : ''}
                         </div>
+
+                        <!-- Retail nuances: Installments, Pickup & Payment -->
+                        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 pt-1.5 text-[11px] text-platinum-400">
+                            <span class="flex items-center gap-1 text-gold-300 font-medium">
+                                <i class="fa-solid fa-credit-card text-[10px]"></i>
+                                ${cheapest.installments_12x ? `12 cuotas de ${formatPrice(cheapest.installments_12x)} sin int.` : '12 cuotas sin int.'}
+                            </span>
+                            <span class="text-platinum-600">•</span>
+                            <span class="flex items-center gap-1 ${cheapest.card_name ? 'text-purple-300 font-medium' : 'text-platinum-300'}">
+                                ${cheapest.card_name ? `<i class="fa-solid fa-star text-purple-400 text-[10px]"></i> ${cheapest.card_name}` : `<i class="fa-solid fa-check text-emerald-400 text-[10px]"></i> Cualquier tarjeta/Yape`}
+                            </span>
+                            <span class="text-platinum-600">•</span>
+                            <span class="flex items-center gap-1 ${cheapest.pickup_cajamarca ? 'text-emerald-300 font-medium' : 'text-platinum-400'}">
+                                <i class="fa-solid ${cheapest.pickup_cajamarca ? 'fa-location-dot text-emerald-400' : 'fa-truck text-platinum-500'} text-[10px]"></i>
+                                <span>${cheapest.pickup_location}</span>
+                            </span>
+                        </div>
                     </div>
 
-                    <div class="pt-2 sm:pt-1.5">
+                    <div class="pt-2 sm:pt-1.5 flex items-center gap-2">
                         <a 
                             href="${cheapest.url}" 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            class="btn-gold w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs uppercase tracking-wider shadow-md"
+                            class="btn-gold flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs uppercase tracking-wider shadow-md"
                         >
                             <span>Ir a la oferta en ${cheapest.store}</span>
                             <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                         </a>
+                        <button type="button" class="spotlight-compare-btn btn-platinum-outline px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 whitespace-nowrap ${isCompared ? 'bg-gold-500/20 border-gold-400 text-gold-300' : ''}">
+                            <i class="fa-solid ${isCompared ? 'fa-check text-gold-400' : 'fa-code-compare text-platinum-400'} text-[10px]"></i>
+                            <span>${isCompared ? 'En comparativa' : 'Comparar'}</span>
+                        </button>
                     </div>
                 </div>
             </div>
         `;
+
+        const spotFavBtn = bestDealContainer.querySelector(".spotlight-fav-btn");
+        if (spotFavBtn) spotFavBtn.addEventListener("click", () => toggleFavorite(cheapest));
+
+        const spotCompBtn = bestDealContainer.querySelector(".spotlight-compare-btn");
+        if (spotCompBtn) spotCompBtn.addEventListener("click", () => toggleCompareItem(cheapest));
     }
 
     // 3. Store Breakdown Pills
@@ -533,10 +686,12 @@ function renderResults() {
         card.className = "luxury-card rounded-xl p-3 sm:p-4 flex flex-col justify-between";
 
         const isRank1 = (index === 0 && sortSelect.value === "asc");
+        const isFav = isFavorite(prod);
+        const isCompared = state.compareItems.some(p => p.id === prod.id);
 
         card.innerHTML = `
             <div>
-                <!-- Top Info -->
+                <!-- Top Info with Store, Condition & Favorite Heart -->
                 <div class="flex items-center justify-between gap-1.5 mb-2 sm:mb-2.5">
                     <div class="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-platinum-300 truncate">
                         <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background-color: ${prod.store_color}"></span>
@@ -553,32 +708,66 @@ function renderResults() {
                         <span class="text-platinum-500 text-[9px] sm:text-[10px] bg-obsidian-950 border border-obsidian-700/60 px-1.5 py-0.2 rounded">
                             ${prod.condition}
                         </span>
+                        <button type="button" class="card-fav-btn text-xs p-1 text-platinum-500 hover:text-rose-400 transition" title="Favorito">
+                            <i class="${isFav ? 'fa-solid text-rose-500' : 'fa-regular'} fa-heart"></i>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Product Thumbnail -->
-                <div class="w-full h-32 xs:h-36 sm:h-40 bg-obsidian-950 rounded-lg p-2 sm:p-2.5 mb-2.5 sm:mb-3 flex items-center justify-center overflow-hidden border border-obsidian-700/50">
+                <!-- Product Thumbnail + Deal Radar Badge Overlay -->
+                <div class="w-full h-32 xs:h-36 sm:h-40 bg-obsidian-950 rounded-lg p-2 sm:p-2.5 mb-2.5 sm:mb-3 flex items-center justify-center overflow-hidden border border-obsidian-700/50 relative">
                     <img 
                         src="${prod.image_url || DEFAULT_IMAGE_FALLBACK}" 
                         alt="${escapeHtml(prod.title)}"
                         class="max-w-full max-h-full object-contain"
                         onerror="this.src='${DEFAULT_IMAGE_FALLBACK}'"
                     />
+                    ${prod.deal_verdict === "Mínimo Histórico" ? `
+                        <div class="absolute bottom-1.5 left-1.5 bg-amber-950/90 border border-amber-500/50 text-amber-300 text-[9px] font-bold px-1.5 py-0.2 rounded flex items-center gap-1 shadow">
+                            <i class="fa-solid fa-fire text-amber-400"></i> Mínimo Histórico
+                        </div>
+                    ` : (prod.deal_verdict === "Buen Precio" ? `
+                        <div class="absolute bottom-1.5 left-1.5 bg-emerald-950/90 border border-emerald-500/50 text-emerald-300 text-[9px] font-bold px-1.5 py-0.2 rounded flex items-center gap-1 shadow">
+                            <i class="fa-solid fa-check text-emerald-400"></i> Buen Precio
+                        </div>
+                    ` : '')}
                 </div>
 
-                <!-- Title -->
+                <!-- Title & Brand -->
                 <div class="space-y-1">
                     <span class="text-[9px] sm:text-[10px] text-platinum-500 font-medium uppercase tracking-wider block">
-                        ${prod.brand || 'Smartphone'}
+                        ${prod.brand || 'Producto'}
                     </span>
                     <h3 class="text-xs font-medium text-platinum-200 line-clamp-2 leading-snug sm:leading-relaxed" title="${escapeHtml(prod.title)}">
                         ${escapeHtml(prod.title)}
                     </h3>
                 </div>
+
+                <!-- Logistics & Payment Highlights -->
+                <div class="pt-2 space-y-1 text-[10px]">
+                    <!-- Payment method -->
+                    <div class="flex items-center gap-1 ${prod.card_name ? 'text-purple-300 font-medium' : 'text-platinum-400'} truncate">
+                        <i class="fa-solid fa-credit-card text-[9px] ${prod.card_name ? 'text-purple-400' : 'text-emerald-400'} flex-shrink-0"></i>
+                        <span class="truncate">${prod.payment_method}</span>
+                    </div>
+
+                    <!-- Cajamarca pickup / Courier -->
+                    <div class="flex items-center gap-1 ${prod.pickup_cajamarca ? 'text-emerald-400 font-medium' : 'text-platinum-500'} truncate">
+                        <i class="fa-solid ${prod.pickup_cajamarca ? 'fa-location-dot text-emerald-400' : 'fa-truck text-platinum-600'} text-[9px] flex-shrink-0"></i>
+                        <span class="truncate">${prod.pickup_location}</span>
+                    </div>
+
+                    <!-- Installments -->
+                    ${prod.installments_12x ? `
+                        <div class="text-[9px] text-gold-400/90 font-mono">
+                            12 cuotas de ${formatPrice(prod.installments_12x)} sin int.
+                        </div>
+                    ` : ''}
+                </div>
             </div>
 
-            <!-- Price & Link Button -->
-            <div class="pt-2.5 sm:pt-3 border-t border-obsidian-700/60 mt-2.5 sm:mt-3 space-y-2 sm:space-y-2.5">
+            <!-- Price & Actions -->
+            <div class="pt-2.5 sm:pt-3 border-t border-obsidian-700/60 mt-2.5 sm:mt-3 space-y-2">
                 <div class="flex items-baseline justify-between gap-1">
                     <div>
                         <div class="text-base sm:text-lg font-bold ${isRank1 ? 'text-gold-300' : 'text-white'}">
@@ -598,17 +787,28 @@ function renderResults() {
                     ` : ''}
                 </div>
 
-                <a 
-                    href="${prod.url}" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    class="btn-platinum-outline w-full flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 sm:py-2 rounded-lg"
-                >
-                    <span>Ver en ${prod.store}</span>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-platinum-400"></i>
-                </a>
+                <div class="flex items-center gap-1.5">
+                    <a 
+                        href="${prod.url}" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        class="btn-platinum-outline flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 sm:py-2 rounded-lg"
+                    >
+                        <span>Ver oferta</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-platinum-400"></i>
+                    </a>
+                    <button type="button" class="card-compare-btn px-2.5 py-1.5 sm:py-2 rounded-lg border text-xs font-medium transition flex items-center gap-1 ${isCompared ? 'bg-gold-500/20 border-gold-400 text-gold-300 font-bold' : 'bg-obsidian-950 border-obsidian-700 text-platinum-400 hover:text-white hover:border-gold-400/40'}" title="Comparar producto">
+                        <i class="fa-solid ${isCompared ? 'fa-check text-gold-400' : 'fa-code-compare text-platinum-500'} text-[10px]"></i>
+                    </button>
+                </div>
             </div>
         `;
+
+        const favBtn = card.querySelector(".card-fav-btn");
+        if (favBtn) favBtn.addEventListener("click", () => toggleFavorite(prod));
+
+        const compBtn = card.querySelector(".card-compare-btn");
+        if (compBtn) compBtn.addEventListener("click", () => toggleCompareItem(prod));
 
         productGrid.appendChild(card);
     });
@@ -1096,5 +1296,532 @@ function fallbackCopy(text, cb) {
         console.error('Fallback copy error:', err);
     }
     document.body.removeChild(textArea);
+}
+
+// =========================================================
+// FAVORITES / WISHLIST SYSTEM
+// =========================================================
+
+function getFavoriteKey(item) {
+    if (item.fav_id) return item.fav_id;
+    if (item.id) return item.id;
+    const store = item.store || item.platform || item.brand || 'item';
+    const title = item.title || item.name || '';
+    return `${store}_${title}`.toLowerCase().replace(/[^a-z0-9]/g, '_');
+}
+
+function isFavorite(item) {
+    const key = getFavoriteKey(item);
+    return state.favorites.some(f => f.fav_id === key);
+}
+
+function toggleFavorite(item) {
+    const key = getFavoriteKey(item);
+    const existingIndex = state.favorites.findIndex(f => f.fav_id === key);
+
+    if (existingIndex >= 0) {
+        state.favorites.splice(existingIndex, 1);
+    } else {
+        state.favorites.unshift({
+            fav_id: key,
+            id: item.id || key,
+            title: item.title || item.name,
+            store: item.store || item.platform || item.brand || 'Tienda',
+            store_color: item.store_color || item.platform_color || item.color || '#c5a880',
+            price: item.price != null ? item.price : (item.lowest_price != null ? item.lowest_price : 0),
+            original_price: item.original_price || null,
+            discount_percent: item.discount_percent || null,
+            url: item.url || item.deal_url || (item.prices && item.prices[0] ? item.prices[0].url : '#'),
+            image_url: item.image_url,
+            pickup_location: item.pickup_location || (item.pickup_cajamarca ? 'Cajamarca' : 'Envío'),
+            deal_verdict: item.deal_verdict || null
+        });
+    }
+
+    saveFavoritesToStorage();
+    updateFavoritesBadge();
+    renderFavoritesList();
+
+    // Refresh active view to toggle heart icon
+    if (state.activeView === "comparator") renderResults();
+    else if (state.activeView === "groceries") renderGroceries();
+    else if (state.activeView === "food") renderFoodDeals();
+}
+
+function updateFavoritesBadge() {
+    const count = state.favorites.length;
+    if (favCountBadge) favCountBadge.textContent = count;
+    if (favModalCounter) favModalCounter.textContent = count;
+}
+
+function renderFavoritesList() {
+    if (!favoritesList) return;
+
+    if (state.favorites.length === 0) {
+        favoritesList.innerHTML = `
+            <div class="py-12 text-center space-y-2">
+                <i class="fa-regular fa-heart text-platinum-600 text-3xl block"></i>
+                <p class="text-sm font-semibold text-platinum-300">No tienes productos en favoritos</p>
+                <p class="text-xs text-platinum-500">Toca el ícono de corazón en cualquier producto o promo para guardarlo aquí.</p>
+            </div>
+        `;
+        return;
+    }
+
+    favoritesList.innerHTML = "";
+    state.favorites.forEach((fav, index) => {
+        const itemRow = document.createElement("div");
+        itemRow.className = "flex items-center justify-between gap-3 p-3 rounded-xl bg-obsidian-900 border border-obsidian-800 hover:border-gold-400/30 transition";
+
+        itemRow.innerHTML = `
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-12 h-12 rounded-lg bg-obsidian-950 border border-obsidian-700/60 p-1 flex items-center justify-center flex-shrink-0">
+                    <img src="${fav.image_url || DEFAULT_IMAGE_FALLBACK}" alt="${escapeHtml(fav.title)}" class="max-w-full max-h-full object-contain" onerror="this.src='${DEFAULT_IMAGE_FALLBACK}'">
+                </div>
+                <div class="space-y-0.5 min-w-0">
+                    <div class="flex items-center gap-1.5 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${fav.store_color}"></span>
+                        <span class="font-medium text-platinum-300">${fav.store}</span>
+                        ${fav.deal_verdict ? `<span class="text-amber-400 font-bold">• ${fav.deal_verdict}</span>` : ''}
+                    </div>
+                    <h4 class="text-xs font-semibold text-white truncate max-w-sm" title="${escapeHtml(fav.title)}">${escapeHtml(fav.title)}</h4>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-xs sm:text-sm font-bold text-gold-300">${formatPrice(fav.price)}</span>
+                        ${fav.original_price ? `<span class="text-[10px] text-platinum-500 line-through">${formatPrice(fav.original_price)}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <a href="${fav.url}" target="_blank" rel="noopener noreferrer" class="btn-gold px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1">
+                    <span>Comprar</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                </a>
+                <button type="button" class="remove-fav-btn text-platinum-500 hover:text-rose-400 p-1.5 transition text-xs" data-index="${index}" title="Quitar de favoritos">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        `;
+
+        const removeBtn = itemRow.querySelector(".remove-fav-btn");
+        removeBtn.addEventListener("click", () => {
+            state.favorites.splice(index, 1);
+            saveFavoritesToStorage();
+            updateFavoritesBadge();
+            renderFavoritesList();
+            if (state.activeView === "comparator") renderResults();
+            else if (state.activeView === "groceries") renderGroceries();
+            else if (state.activeView === "food") renderFoodDeals();
+        });
+
+        favoritesList.appendChild(itemRow);
+    });
+}
+
+function setupFavoritesEventListeners() {
+    if (openFavoritesBtn) {
+        openFavoritesBtn.addEventListener("click", () => {
+            renderFavoritesList();
+            if (favoritesModal) favoritesModal.classList.remove("hidden");
+        });
+    }
+
+    const closeFavorites = () => {
+        if (favoritesModal) favoritesModal.classList.add("hidden");
+    };
+
+    if (closeFavoritesModal) closeFavoritesModal.addEventListener("click", closeFavorites);
+    if (closeFavoritesBtnFooter) closeFavoritesBtnFooter.addEventListener("click", closeFavorites);
+
+    if (favoritesModal) {
+        favoritesModal.addEventListener("click", (e) => {
+            if (e.target === favoritesModal) closeFavorites();
+        });
+    }
+
+    if (clearAllFavoritesBtn) {
+        clearAllFavoritesBtn.addEventListener("click", () => {
+            if (state.favorites.length === 0) return;
+            state.favorites = [];
+            saveFavoritesToStorage();
+            updateFavoritesBadge();
+            renderFavoritesList();
+            if (state.activeView === "comparator") renderResults();
+            else if (state.activeView === "groceries") renderGroceries();
+            else if (state.activeView === "food") renderFoodDeals();
+        });
+    }
+}
+
+// =========================================================
+// SIDE-BY-SIDE COMPARISON SYSTEM
+// =========================================================
+
+function toggleCompareItem(prod) {
+    const idx = state.compareItems.findIndex(p => p.id === prod.id);
+    if (idx >= 0) {
+        state.compareItems.splice(idx, 1);
+    } else {
+        if (state.compareItems.length >= 2) {
+            state.compareItems.shift(); // remove oldest to keep 2
+        }
+        state.compareItems.push(prod);
+    }
+
+    updateCompareTray();
+    renderResults();
+}
+
+function updateCompareTray() {
+    if (!compareTray) return;
+    const count = state.compareItems.length;
+
+    if (count === 0) {
+        compareTray.classList.add("translate-y-32", "opacity-0", "pointer-events-none");
+        return;
+    }
+
+    compareTray.classList.remove("translate-y-32", "opacity-0", "pointer-events-none");
+
+    if (compareTrayPreviews) {
+        compareTrayPreviews.innerHTML = state.compareItems.map(p => `
+            <div class="w-8 h-8 rounded-full border-2 border-gold-400 bg-obsidian-950 overflow-hidden flex items-center justify-center shadow">
+                <img src="${p.image_url || DEFAULT_IMAGE_FALLBACK}" alt="${escapeHtml(p.title)}" class="max-w-full max-h-full object-contain p-0.5" onerror="this.src='${DEFAULT_IMAGE_FALLBACK}'">
+            </div>
+        `).join('');
+    }
+
+    if (compareTrayText) {
+        compareTrayText.textContent = count === 1 
+            ? "1 de 2 seleccionados (elige otro para comparar)" 
+            : "¡2 de 2 listos para comparar!";
+    }
+
+    if (compareTrayBtn) {
+        compareTrayBtn.disabled = (count < 2);
+        compareTrayBtn.className = count === 2
+            ? "btn-gold px-3.5 sm:px-4 py-1.5 rounded-lg text-xs uppercase tracking-wider font-semibold flex items-center gap-1.5 whitespace-nowrap shadow-md cursor-pointer"
+            : "bg-obsidian-800 text-platinum-500 border border-obsidian-700 px-3.5 sm:px-4 py-1.5 rounded-lg text-xs uppercase tracking-wider font-semibold flex items-center gap-1.5 whitespace-nowrap cursor-not-allowed";
+    }
+}
+
+function openCompareModal() {
+    if (state.compareItems.length < 2 || !compareModalContent) return;
+    const [p1, p2] = state.compareItems;
+    const diff = Math.abs(p1.price - p2.price);
+    const p1Cheaper = p1.price < p2.price;
+    const p2Cheaper = p2.price < p1.price;
+
+    compareModalContent.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <!-- Product 1 Card -->
+            <div class="luxury-card rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 ${p1Cheaper ? 'border-gold-400/50 shadow-lg shadow-gold-500/10' : ''}">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-semibold text-platinum-300 bg-obsidian-850 border border-obsidian-700 px-2 py-0.5 rounded flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${p1.store_color}"></span>
+                            ${p1.store}
+                        </span>
+                        ${p1Cheaper ? '<span class="text-[10px] font-bold text-gold-300 bg-gold-900/60 border border-gold-400/40 px-2 py-0.5 rounded">MÁS ECONÓMICO</span>' : ''}
+                    </div>
+
+                    <div class="w-full h-36 sm:h-44 bg-obsidian-950 rounded-lg p-2 flex items-center justify-center border border-obsidian-700/50">
+                        <img src="${p1.image_url || DEFAULT_IMAGE_FALLBACK}" alt="${escapeHtml(p1.title)}" class="max-w-full max-h-full object-contain" onerror="this.src='${DEFAULT_IMAGE_FALLBACK}'">
+                    </div>
+
+                    <h4 class="text-xs sm:text-sm font-semibold text-white leading-snug line-clamp-2">${escapeHtml(p1.title)}</h4>
+
+                    <div class="space-y-1">
+                        <div class="text-xl sm:text-2xl font-bold text-gold-300">${formatPrice(p1.price)}</div>
+                        ${p1Cheaper && diff > 0 ? `<div class="text-xs text-emerald-400 font-medium">S/ ${diff.toLocaleString('es-PE', {minimumFractionDigits: 2})} de ahorro frente a ${p2.store}</div>` : ''}
+                    </div>
+
+                    <!-- Comparison Table Specs -->
+                    <div class="bg-obsidian-950/80 rounded-lg p-2.5 sm:p-3 space-y-2 text-xs border border-obsidian-800">
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Medio de Pago:</span>
+                            <span class="text-white font-medium text-right">${p1.payment_method}</span>
+                        </div>
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Retiro en Cajamarca:</span>
+                            <span class="text-white font-medium text-right ${p1.pickup_cajamarca ? 'text-emerald-400' : ''}">${p1.pickup_location}</span>
+                        </div>
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Cuotas sin intereses:</span>
+                            <span class="text-gold-300 font-medium text-right">${p1.installments_12x ? `12x ${formatPrice(p1.installments_12x)}` : 'Sin cuotas'}</span>
+                        </div>
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Almacenamiento:</span>
+                            <span class="text-white font-medium text-right">${(p1.specs && p1.specs.Almacenamiento) || 'Estándar'}</span>
+                        </div>
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Memoria RAM:</span>
+                            <span class="text-white font-medium text-right">${(p1.specs && p1.specs["Memoria RAM"]) || 'Estándar'}</span>
+                        </div>
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Pantalla:</span>
+                            <span class="text-white font-medium text-right">${(p1.specs && p1.specs.Pantalla) || 'Estándar'}</span>
+                        </div>
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Garantía Oficial:</span>
+                            <span class="text-white font-medium text-right">${(p1.specs && p1.specs.Garantía) || '12 Meses Oficial'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="${p1.url}" target="_blank" rel="noopener noreferrer" class="btn-gold w-full text-center py-2.5 rounded-lg text-xs uppercase tracking-wider font-semibold">
+                    Ir a la oferta en ${p1.store}
+                </a>
+            </div>
+
+            <!-- Product 2 Card -->
+            <div class="luxury-card rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 ${p2Cheaper ? 'border-gold-400/50 shadow-lg shadow-gold-500/10' : ''}">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-semibold text-platinum-300 bg-obsidian-850 border border-obsidian-700 px-2 py-0.5 rounded flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${p2.store_color}"></span>
+                            ${p2.store}
+                        </span>
+                        ${p2Cheaper ? '<span class="text-[10px] font-bold text-gold-300 bg-gold-900/60 border border-gold-400/40 px-2 py-0.5 rounded">MÁS ECONÓMICO</span>' : ''}
+                    </div>
+
+                    <div class="w-full h-36 sm:h-44 bg-obsidian-950 rounded-lg p-2 flex items-center justify-center border border-obsidian-700/50">
+                        <img src="${p2.image_url || DEFAULT_IMAGE_FALLBACK}" alt="${escapeHtml(p2.title)}" class="max-w-full max-h-full object-contain" onerror="this.src='${DEFAULT_IMAGE_FALLBACK}'">
+                    </div>
+
+                    <h4 class="text-xs sm:text-sm font-semibold text-white leading-snug line-clamp-2">${escapeHtml(p2.title)}</h4>
+
+                    <div class="space-y-1">
+                        <div class="text-xl sm:text-2xl font-bold text-gold-300">${formatPrice(p2.price)}</div>
+                        ${p2Cheaper && diff > 0 ? `<div class="text-xs text-emerald-400 font-medium">S/ ${diff.toLocaleString('es-PE', {minimumFractionDigits: 2})} de ahorro frente a ${p1.store}</div>` : ''}
+                    </div>
+
+                    <!-- Comparison Table Specs -->
+                    <div class="bg-obsidian-950/80 rounded-lg p-2.5 sm:p-3 space-y-2 text-xs border border-obsidian-800">
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Medio de Pago:</span>
+                            <span class="text-white font-medium text-right">${p2.payment_method}</span>
+                        </div>
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Retiro en Cajamarca:</span>
+                            <span class="text-white font-medium text-right ${p2.pickup_cajamarca ? 'text-emerald-400' : ''}">${p2.pickup_location}</span>
+                        </div>
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Cuotas sin intereses:</span>
+                            <span class="text-gold-300 font-medium text-right">${p2.installments_12x ? `12x ${formatPrice(p2.installments_12x)}` : 'Sin cuotas'}</span>
+                        </div>
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Almacenamiento:</span>
+                            <span class="text-white font-medium text-right">${(p2.specs && p2.specs.Almacenamiento) || 'No especificado'}</span>
+                        </div>
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Memoria RAM:</span>
+                            <span class="text-white font-medium text-right">${(p2.specs && p2.specs["Memoria RAM"]) || 'Estándar'}</span>
+                        </div>
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Pantalla:</span>
+                            <span class="text-white font-medium text-right">${(p2.specs && p2.specs.Pantalla) || 'Estándar'}</span>
+                        </div>
+                        <div class="flex justify-between text-platinum-400">
+                            <span>Garantía Oficial:</span>
+                            <span class="text-white font-medium text-right">${(p2.specs && p2.specs.Garantía) || '12 Meses Oficial'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="${p2.url}" target="_blank" rel="noopener noreferrer" class="btn-gold w-full text-center py-2.5 rounded-lg text-xs uppercase tracking-wider font-semibold">
+                    Ir a la oferta en ${p2.store}
+                </a>
+            </div>
+        </div>
+    `;
+
+    if (compareModal) compareModal.classList.remove("hidden");
+}
+
+function setupCompareEventListeners() {
+    if (compareTrayBtn) {
+        compareTrayBtn.addEventListener("click", () => {
+            if (state.compareItems.length === 2) openCompareModal();
+        });
+    }
+
+    if (compareTrayClear) {
+        compareTrayClear.addEventListener("click", () => {
+            state.compareItems = [];
+            updateCompareTray();
+            renderResults();
+        });
+    }
+
+    const closeCompare = () => {
+        if (compareModal) compareModal.classList.add("hidden");
+    };
+
+    if (closeCompareModal) closeCompareModal.addEventListener("click", closeCompare);
+
+    if (compareModal) {
+        compareModal.addEventListener("click", (e) => {
+            if (e.target === compareModal) closeCompare();
+        });
+    }
+}
+
+// =========================================================
+// GROCERIES & SUPERMARKET PRICE COMPARATOR SYSTEM
+// =========================================================
+
+async function fetchGroceries() {
+    try {
+        const params = new URLSearchParams();
+        if (state.groceriesCategory && state.groceriesCategory !== "todas") {
+            params.append("category", state.groceriesCategory);
+        }
+        if (state.groceriesQuery && state.groceriesQuery.trim()) {
+            params.append("q", state.groceriesQuery.trim());
+        }
+        params.append("sort", "asc");
+
+        const resp = await fetch(`/api/groceries?${params.toString()}`);
+        if (!resp.ok) throw new Error("Failed to fetch groceries");
+        const data = await resp.json();
+
+        state.groceries = data.results || [];
+        state.groceriesStats = data.stats || {};
+        renderGroceries();
+    } catch (err) {
+        console.error("Error fetching groceries:", err);
+    }
+}
+
+function renderGroceries() {
+    if (!groceriesGrid) return;
+
+    // Update Totals
+    if (basketTotalMetro) basketTotalMetro.textContent = formatPrice(state.groceriesStats.total_metro_basket);
+    if (basketTotalTottus) basketTotalTottus.textContent = formatPrice(state.groceriesStats.total_tottus_basket);
+    if (basketTotalPlazavea) basketTotalPlazavea.textContent = formatPrice(state.groceriesStats.total_plazavea_basket);
+    if (basketMaxSaving) basketMaxSaving.textContent = `Ahorras ${formatPrice(state.groceriesStats.max_possible_saving)}`;
+    if (groceriesCountBadge) groceriesCountBadge.textContent = `${state.groceries.length} productos`;
+
+    groceriesGrid.innerHTML = "";
+
+    state.groceries.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "luxury-card rounded-xl p-3.5 sm:p-4 flex flex-col justify-between space-y-3";
+
+        const isFav = isFavorite(item);
+
+        card.innerHTML = `
+            <div>
+                <!-- Top category & Favorite heart -->
+                <div class="flex items-center justify-between gap-1.5 mb-2">
+                    <span class="text-[9px] font-semibold text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded uppercase tracking-wider">
+                        ${escapeHtml(item.category_label)}
+                    </span>
+                    <button type="button" class="groc-fav-btn text-xs p-1 text-platinum-500 hover:text-rose-400 transition" title="Guardar en favoritos">
+                        <i class="${isFav ? 'fa-solid text-rose-500' : 'fa-regular'} fa-heart"></i>
+                    </button>
+                </div>
+
+                <!-- Product Thumbnail -->
+                <div class="w-full h-32 bg-obsidian-950 rounded-lg p-2 mb-2 flex items-center justify-center border border-obsidian-700/50">
+                    <img src="${item.image_url || DEFAULT_IMAGE_FALLBACK}" alt="${escapeHtml(item.name)}" class="max-w-full max-h-full object-contain" onerror="this.src='${DEFAULT_IMAGE_FALLBACK}'">
+                </div>
+
+                <!-- Title & Unit -->
+                <div class="space-y-0.5">
+                    <span class="text-[10px] text-platinum-500 uppercase tracking-wider font-semibold block">${item.unit}</span>
+                    <h3 class="text-xs sm:text-sm font-semibold text-platinum-100 line-clamp-2 leading-snug" title="${escapeHtml(item.name)}">
+                        ${escapeHtml(item.name)}
+                    </h3>
+                </div>
+
+                <!-- Supermarket Price Comparison Rows (Ranked lowest to highest) -->
+                <div class="mt-3 space-y-1.5 pt-2 border-t border-obsidian-800">
+                    <span class="text-[9px] uppercase tracking-wider text-platinum-500 font-semibold block">Precios por Supermercado:</span>
+                    ${item.prices.map((p, idx) => {
+                        const isCheapest = (idx === 0);
+                        return `
+                            <div class="flex items-center justify-between p-1.5 rounded-lg ${isCheapest ? 'bg-obsidian-900 border border-gold-400/40 shadow-sm' : 'bg-obsidian-950 border border-obsidian-800/80'} text-xs">
+                                <div class="flex items-center gap-1.5 truncate">
+                                    <span class="w-2 h-2 rounded-full" style="background-color: ${p.color}"></span>
+                                    <span class="font-medium text-platinum-200 truncate">${p.store}</span>
+                                    <span class="text-[9px] text-platinum-500 truncate hidden xs:inline">(${p.pickup_cajamarca})</span>
+                                </div>
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <span class="font-bold ${isCheapest ? 'text-gold-300' : 'text-platinum-300'}">${formatPrice(p.price)}</span>
+                                    <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="text-platinum-400 hover:text-gold-300 p-0.5 transition" title="Ver en ${p.store}">
+                                        <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+
+            <!-- Best deal highlight footer -->
+            <div class="pt-2 border-t border-obsidian-700/60 flex items-center justify-between text-xs">
+                <span class="text-platinum-400 text-[11px]">
+                    Mejor precio en <strong class="text-gold-300 font-semibold">${item.cheapest_store}</strong>
+                </span>
+                ${item.saving_amount > 0 ? `
+                    <span class="text-emerald-400 font-semibold text-[10px] bg-emerald-950/60 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                        Ahorras S/ ${item.saving_amount.toFixed(2)}
+                    </span>
+                ` : ''}
+            </div>
+        `;
+
+        const favBtn = card.querySelector(".groc-fav-btn");
+        if (favBtn) favBtn.addEventListener("click", () => toggleFavorite(item));
+
+        groceriesGrid.appendChild(card);
+    });
+}
+
+function setupGroceriesEventListeners() {
+    // 1. Category Pills
+    document.querySelectorAll(".grocery-cat-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".grocery-cat-btn").forEach(b => {
+                b.className = "grocery-cat-btn px-3 py-1.5 rounded-lg border text-xs font-medium transition bg-obsidian-950 border-obsidian-700 text-platinum-400 hover:text-gold-200 hover:border-gold-400/30";
+            });
+            btn.className = "grocery-cat-btn px-3 py-1.5 rounded-lg border text-xs font-medium transition active-groc-cat bg-obsidian-850 border-gold-400/50 text-gold-300 shadow-sm";
+
+            state.groceriesCategory = btn.dataset.category;
+            fetchGroceries();
+        });
+    });
+
+    // 2. Search Input
+    let debounceTimer;
+    if (groceriesSearchInput) {
+        groceriesSearchInput.addEventListener("input", () => {
+            const val = groceriesSearchInput.value.trim();
+            if (groceriesClearBtn) {
+                if (val.length > 0) groceriesClearBtn.classList.remove("hidden");
+                else groceriesClearBtn.classList.add("hidden");
+            }
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                state.groceriesQuery = val;
+                fetchGroceries();
+            }, 300);
+        });
+    }
+
+    if (groceriesClearBtn) {
+        groceriesClearBtn.addEventListener("click", () => {
+            if (groceriesSearchInput) {
+                groceriesSearchInput.value = "";
+                groceriesClearBtn.classList.add("hidden");
+                state.groceriesQuery = "";
+                fetchGroceries();
+                groceriesSearchInput.focus();
+            }
+        });
+    }
 }
 

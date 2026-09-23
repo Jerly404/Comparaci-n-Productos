@@ -6,11 +6,12 @@ from fastapi.responses import FileResponse
 from scrapers.manager import SearchManager
 from scrapers.events_data import get_events
 from scrapers.food_deals import search_food_deals
+from scrapers.groceries_data import search_groceries
 
 app = FastAPI(
-    title="Comparador de Precios de Celulares Perú",
-    description="Sistema inteligente que busca teléfonos en las principales tiendas peruanas y los ordena de menor a mayor precio.",
-    version="1.0.0"
+    title="BuscaProductos Perú - Comparador de Precios Inteligente",
+    description="Sistema inteligente de compras en Perú: celulares, tecnología, canasta básica y delivery ordenados de menor a mayor.",
+    version="2.0.0"
 )
 
 manager = SearchManager()
@@ -33,11 +34,20 @@ async def get_discount_events():
     """List major upcoming discount events in Peru (Black Friday, Cyber Wow, Cyber Days)."""
     return get_events()
 
+@app.get("/api/groceries")
+async def get_groceries(
+    category: Optional[str] = Query(None, description="Categoría de canasta básica (abarrotes, lacteos, carnes, limpieza, cajamarca)"),
+    q: Optional[str] = Query(None, description="Búsqueda por texto (ej: arroz, aceite, leche Gloria, queso mantecoso)"),
+    sort: str = Query("asc", description="Orden: 'asc' (menor a mayor precio), 'desc'")
+):
+    """Compares prices across Peruvian supermarkets (PlazaVea, Metro, Tottus, Cajamarca local)."""
+    return search_groceries(category=category, query=q, sort_by=sort)
+
 @app.get("/api/food-deals")
 async def get_food_deals(
     category: Optional[str] = Query(None, description="Categoría de comida (ej: pizza, burger, pollo, makis, chifa, postres)"),
     platform: Optional[str] = Query(None, description="Plataforma (ej: Yape Promos, Rappi, App Oficial, Cuponera / Delivery)"),
-    location: Optional[str] = Query(None, description="Localidad o distrito (ej: miraflores, surco, lima_norte, arequipa)"),
+    location: Optional[str] = Query(None, description="Localidad o distrito (ej: miraflores, surco, lima_norte, cajamarca, arequipa)"),
     only_discounts: bool = Query(False, description="Filtrar solo ofertas con descuento o ver toda la carta"),
     q: Optional[str] = Query(None, description="Búsqueda por texto (ej: pizza, bembos, kfc, combos)"),
     sort: str = Query("asc", description="Criterio de ordenación: 'asc' (menor a mayor precio), 'desc', 'discount'")
@@ -59,6 +69,9 @@ async def search_products(
     sort: str = Query("asc", description="Criterio de ordenación: 'asc' (menor a mayor precio), 'desc', 'discount'"),
     hide_accessories: bool = Query(True, description="Filtrar fundas, cables, micas y accesorios"),
     include_refurbished: bool = Query(True, description="Incluir celulares reacondicionados o seminuevos"),
+    payment: Optional[str] = Query(None, description="Filtro de método de pago: 'all', 'any_card', 'store_cards'"),
+    pickup_cajamarca: bool = Query(False, description="Filtrar solo tiendas con retiro gratis en Cajamarca (El Quinde / Real Plaza)"),
+    verdict: Optional[str] = Query(None, description="Filtro de radar: 'all', 'minimo' (Mínimo Histórico), 'buen_precio'"),
     min_price: Optional[float] = Query(None, description="Precio mínimo en soles"),
     max_price: Optional[float] = Query(None, description="Precio máximo en soles")
 ):
@@ -71,7 +84,10 @@ async def search_products(
         include_refurbished=include_refurbished,
         min_price=min_price,
         max_price=max_price,
-        sort_by=sort
+        sort_by=sort,
+        payment_filter=payment,
+        pickup_cajamarca_only=pickup_cajamarca,
+        deal_verdict_filter=verdict
     )
     return result
 

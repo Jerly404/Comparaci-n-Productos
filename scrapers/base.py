@@ -19,6 +19,14 @@ class ProductItem:
     image_url: str
     in_stock: bool = True
     condition: str = "Nuevo"
+    deal_verdict: str = "Precio Normal" # "Mínimo Histórico", "Buen Precio", "Precio Normal"
+    payment_method: str = "Cualquier Tarjeta / Yape" # "Cualquier Tarjeta / Yape", "Tarjeta CMR", "Tarjeta Ripley", "Tarjeta Oh!"
+    card_name: Optional[str] = None
+    pickup_cajamarca: bool = False
+    pickup_location: str = "Envío a Domicilio" # "El Quinde Cajamarca", "Real Plaza Cajamarca", "Envío courier a Cajamarca"
+    installments_12x: Optional[float] = None
+    installments_info: Optional[str] = None
+    specs: Optional[dict] = None
 
     def to_dict(self) -> dict:
         return {
@@ -35,7 +43,15 @@ class ProductItem:
             "url": self.url,
             "image_url": self.image_url,
             "in_stock": self.in_stock,
-            "condition": self.condition
+            "condition": self.condition,
+            "deal_verdict": self.deal_verdict,
+            "payment_method": self.payment_method,
+            "card_name": self.card_name,
+            "pickup_cajamarca": self.pickup_cajamarca,
+            "pickup_location": self.pickup_location,
+            "installments_12x": self.installments_12x,
+            "installments_info": self.installments_info,
+            "specs": self.specs or {}
         }
 
 class BaseScraper(ABC):
