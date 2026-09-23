@@ -181,19 +181,22 @@ function setupEventListeners() {
 
 function switchView(viewName) {
     state.activeView = viewName;
+    const activeTab = "px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition text-gold-300 bg-obsidian-850 border border-gold-400/30 font-semibold shadow-sm flex items-center gap-1.5 whitespace-nowrap";
+    const inactiveTab = "px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition text-platinum-400 hover:text-gold-200 hover:bg-obsidian-850 flex items-center gap-1.5 whitespace-nowrap";
+
     if (viewName === "comparator") {
         comparatorView.classList.remove("hidden");
         eventsView.classList.add("hidden");
 
-        tabComparator.className = "px-3 py-1.5 rounded-lg transition text-gold-300 bg-obsidian-850 border border-gold-400/30 font-semibold shadow-sm flex items-center gap-1.5";
-        tabEvents.className = "px-3 py-1.5 rounded-lg transition text-platinum-400 hover:text-gold-200 hover:bg-obsidian-850 flex items-center gap-1.5";
+        tabComparator.className = activeTab;
+        tabEvents.className = inactiveTab;
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
         comparatorView.classList.add("hidden");
         eventsView.classList.remove("hidden");
 
-        tabEvents.className = "px-3 py-1.5 rounded-lg transition text-gold-300 bg-obsidian-850 border border-gold-400/30 font-semibold shadow-sm flex items-center gap-1.5";
-        tabComparator.className = "px-3 py-1.5 rounded-lg transition text-platinum-400 hover:text-gold-200 hover:bg-obsidian-850 flex items-center gap-1.5";
+        tabEvents.className = activeTab;
+        tabComparator.className = inactiveTab;
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
@@ -259,18 +262,18 @@ function renderEventsGrid() {
 
     state.events.forEach(evt => {
         const card = document.createElement("div");
-        card.className = "luxury-card rounded-xl p-5 flex flex-col justify-between space-y-4 shadow-lg";
+        card.className = "luxury-card rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-3.5 sm:space-y-4 shadow-lg";
 
         const storesList = Array.isArray(evt.stores) ? evt.stores : [];
         const isBlackFriday = evt.id === "black-friday";
 
         card.innerHTML = `
-            <div class="space-y-3">
+            <div class="space-y-2.5 sm:space-y-3">
                 <div class="flex items-center justify-between gap-2">
-                    <span class="text-[10px] font-semibold text-gold-300 bg-gold-900/60 border border-gold-400/40 px-2 py-0.5 rounded uppercase tracking-wider">
+                    <span class="text-[9px] sm:text-[10px] font-semibold text-gold-300 bg-gold-900/60 border border-gold-400/40 px-2 py-0.5 rounded uppercase tracking-wider">
                         ${evt.badge}
                     </span>
-                    <span class="text-[11px] text-platinum-500 font-mono">
+                    <span class="text-[10px] sm:text-[11px] text-platinum-500 font-mono">
                         ${evt.discount_estimate}
                     </span>
                 </div>
@@ -286,8 +289,8 @@ function renderEventsGrid() {
                 </div>
 
                 <!-- Live countdown badge -->
-                <div class="bg-obsidian-950 border border-obsidian-700/80 rounded-lg p-2.5 flex items-center justify-between text-xs">
-                    <span class="text-platinum-500 text-[11px]">Cuenta regresiva:</span>
+                <div class="bg-obsidian-950 border border-obsidian-700/80 rounded-lg p-2 sm:p-2.5 flex flex-col xs:flex-row xs:items-center justify-between gap-1 text-xs">
+                    <span class="text-platinum-500 text-[10px] sm:text-[11px]">Cuenta regresiva:</span>
                     <div class="event-countdown-pill text-xs font-mono text-platinum-300" data-start-date="${evt.start_date}">
                         Cargando...
                     </div>
@@ -408,8 +411,8 @@ function renderResults() {
             : 0;
 
         bestDealContainer.innerHTML = `
-            <div class="best-deal-luxury rounded-xl p-5 flex flex-col sm:flex-row items-center gap-5">
-                <div class="w-32 h-32 flex-shrink-0 bg-obsidian-950 rounded-lg p-2.5 border border-obsidian-700/80 flex items-center justify-center">
+            <div class="best-deal-luxury rounded-xl p-3.5 sm:p-5 flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-5 h-full">
+                <div class="w-24 h-24 xs:w-28 xs:h-28 sm:w-36 sm:h-36 flex-shrink-0 bg-obsidian-950 rounded-lg p-2.5 border border-obsidian-700/80 flex items-center justify-center">
                     <img 
                         src="${cheapest.image_url || DEFAULT_IMAGE_FALLBACK}" 
                         alt="${escapeHtml(cheapest.title)}"
@@ -418,46 +421,48 @@ function renderResults() {
                     />
                 </div>
 
-                <div class="flex-1 space-y-2 text-center sm:text-left">
-                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                        <span class="text-[10px] font-semibold text-gold-300 bg-gold-900/60 border border-gold-400/40 px-2 py-0.5 rounded uppercase tracking-wider">
-                            Mejor Precio
-                        </span>
-                        <span class="text-[11px] font-medium text-platinum-300 bg-obsidian-850 border border-obsidian-700 px-2 py-0.5 rounded flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${cheapest.store_color}"></span>
-                            ${cheapest.store}
-                        </span>
-                        <span class="text-[10px] uppercase tracking-wider text-platinum-400 bg-obsidian-950 border border-obsidian-700 px-2 py-0.5 rounded">
-                            ${cheapest.condition}
-                        </span>
+                <div class="flex-1 space-y-2 text-center sm:text-left flex flex-col justify-between w-full">
+                    <div>
+                        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
+                            <span class="text-[9px] sm:text-[10px] font-semibold text-gold-300 bg-gold-900/60 border border-gold-400/40 px-2 py-0.5 rounded uppercase tracking-wider">
+                                Mejor Precio
+                            </span>
+                            <span class="text-[10px] sm:text-[11px] font-medium text-platinum-300 bg-obsidian-850 border border-obsidian-700 px-2 py-0.5 rounded flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${cheapest.store_color}"></span>
+                                ${cheapest.store}
+                            </span>
+                            <span class="text-[9px] sm:text-[10px] uppercase tracking-wider text-platinum-400 bg-obsidian-950 border border-obsidian-700 px-2 py-0.5 rounded">
+                                ${cheapest.condition}
+                            </span>
+                        </div>
+
+                        <h2 class="text-sm sm:text-base lg:text-lg font-semibold text-white leading-snug mt-1.5">
+                            ${escapeHtml(cheapest.title)}
+                        </h2>
+
+                        <div class="flex flex-wrap items-baseline justify-center sm:justify-start gap-2 pt-1">
+                            <span class="text-xl sm:text-2xl font-bold text-gold-300">
+                                ${formatPrice(cheapest.price)}
+                            </span>
+                            ${cheapest.original_price ? `
+                                <span class="text-xs text-platinum-500 line-through">
+                                    ${formatPrice(cheapest.original_price)}
+                                </span>
+                            ` : ''}
+                            ${diff > 0 ? `
+                                <span class="text-xs text-gold-400 font-medium">
+                                    S/ ${diff.toLocaleString()} por debajo del promedio
+                                </span>
+                            ` : ''}
+                        </div>
                     </div>
 
-                    <h2 class="text-base sm:text-lg font-semibold text-white leading-snug">
-                        ${escapeHtml(cheapest.title)}
-                    </h2>
-
-                    <div class="flex flex-wrap items-baseline justify-center sm:justify-start gap-2.5 pt-0.5">
-                        <span class="text-2xl font-bold text-gold-300">
-                            ${formatPrice(cheapest.price)}
-                        </span>
-                        ${cheapest.original_price ? `
-                            <span class="text-xs text-platinum-500 line-through">
-                                ${formatPrice(cheapest.original_price)}
-                            </span>
-                        ` : ''}
-                        ${diff > 0 ? `
-                            <span class="text-xs text-gold-400 font-medium">
-                                S/ ${diff.toLocaleString()} por debajo del promedio
-                            </span>
-                        ` : ''}
-                    </div>
-
-                    <div class="pt-1.5">
+                    <div class="pt-2 sm:pt-1.5">
                         <a 
                             href="${cheapest.url}" 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            class="btn-gold inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs uppercase tracking-wider shadow-md"
+                            class="btn-gold w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs uppercase tracking-wider shadow-md"
                         >
                             <span>Ir a la oferta en ${cheapest.store}</span>
                             <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
@@ -474,7 +479,7 @@ function renderResults() {
         const info = state.storeBreakdown[sId];
         if (info.count > 0) {
             const pill = document.createElement("div");
-            pill.className = "flex items-center gap-2 px-2.5 py-1 rounded-md bg-obsidian-900 border border-obsidian-700/70 text-xs text-platinum-400";
+            pill.className = "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-md bg-obsidian-900 border border-obsidian-700/70 text-[11px] sm:text-xs text-platinum-400";
             pill.innerHTML = `
                 <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${info.color}"></span>
                 <span class="font-medium text-platinum-300">${info.name}</span>
@@ -489,34 +494,34 @@ function renderResults() {
     productGrid.innerHTML = "";
     state.results.forEach((prod, index) => {
         const card = document.createElement("div");
-        card.className = "luxury-card rounded-xl p-4 flex flex-col justify-between";
+        card.className = "luxury-card rounded-xl p-3 sm:p-4 flex flex-col justify-between";
 
         const isRank1 = (index === 0 && sortSelect.value === "asc");
 
         card.innerHTML = `
             <div>
                 <!-- Top Info -->
-                <div class="flex items-center justify-between gap-2 mb-2.5">
-                    <div class="flex items-center gap-1.5 text-[11px] font-medium text-platinum-300">
-                        <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${prod.store_color}"></span>
-                        <span>${prod.store}</span>
+                <div class="flex items-center justify-between gap-1.5 mb-2 sm:mb-2.5">
+                    <div class="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-platinum-300 truncate">
+                        <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background-color: ${prod.store_color}"></span>
+                        <span class="truncate">${prod.store}</span>
                     </div>
-                    <div class="flex items-center gap-1.5 text-[11px]">
+                    <div class="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-[11px] flex-shrink-0">
                         ${isRank1 ? `
-                            <span class="text-gold-300 font-semibold text-[10px] bg-gold-900/60 border border-gold-400/40 px-1.5 py-0.2 rounded uppercase tracking-wider">
+                            <span class="text-gold-300 font-semibold text-[9px] sm:text-[10px] bg-gold-900/60 border border-gold-400/40 px-1.5 py-0.2 rounded uppercase tracking-wider">
                                 Más bajo
                             </span>
                         ` : `
-                            <span class="text-platinum-600 font-medium">#${index + 1}</span>
+                            <span class="text-platinum-600 font-medium text-[10px]">#${index + 1}</span>
                         `}
-                        <span class="text-platinum-500 text-[10px] bg-obsidian-950 border border-obsidian-700/60 px-1.5 py-0.2 rounded">
+                        <span class="text-platinum-500 text-[9px] sm:text-[10px] bg-obsidian-950 border border-obsidian-700/60 px-1.5 py-0.2 rounded">
                             ${prod.condition}
                         </span>
                     </div>
                 </div>
 
                 <!-- Product Thumbnail -->
-                <div class="w-full h-40 bg-obsidian-950 rounded-lg p-2.5 mb-3 flex items-center justify-center overflow-hidden border border-obsidian-700/50">
+                <div class="w-full h-32 xs:h-36 sm:h-40 bg-obsidian-950 rounded-lg p-2 sm:p-2.5 mb-2.5 sm:mb-3 flex items-center justify-center overflow-hidden border border-obsidian-700/50">
                     <img 
                         src="${prod.image_url || DEFAULT_IMAGE_FALLBACK}" 
                         alt="${escapeHtml(prod.title)}"
@@ -527,31 +532,31 @@ function renderResults() {
 
                 <!-- Title -->
                 <div class="space-y-1">
-                    <span class="text-[10px] text-platinum-500 font-medium uppercase tracking-wider block">
+                    <span class="text-[9px] sm:text-[10px] text-platinum-500 font-medium uppercase tracking-wider block">
                         ${prod.brand || 'Smartphone'}
                     </span>
-                    <h3 class="text-xs font-medium text-platinum-200 line-clamp-2 leading-relaxed" title="${escapeHtml(prod.title)}">
+                    <h3 class="text-xs font-medium text-platinum-200 line-clamp-2 leading-snug sm:leading-relaxed" title="${escapeHtml(prod.title)}">
                         ${escapeHtml(prod.title)}
                     </h3>
                 </div>
             </div>
 
             <!-- Price & Link Button -->
-            <div class="pt-3 border-t border-obsidian-700/60 mt-3 space-y-2.5">
-                <div class="flex items-baseline justify-between">
+            <div class="pt-2.5 sm:pt-3 border-t border-obsidian-700/60 mt-2.5 sm:mt-3 space-y-2 sm:space-y-2.5">
+                <div class="flex items-baseline justify-between gap-1">
                     <div>
-                        <div class="text-lg font-bold ${isRank1 ? 'text-gold-300' : 'text-white'}">
+                        <div class="text-base sm:text-lg font-bold ${isRank1 ? 'text-gold-300' : 'text-white'}">
                             ${formatPrice(prod.price)}
                         </div>
                         ${prod.original_price ? `
-                            <div class="text-[11px] text-platinum-500 line-through">
+                            <div class="text-[10px] sm:text-[11px] text-platinum-500 line-through">
                                 ${formatPrice(prod.original_price)}
                             </div>
                         ` : ''}
                     </div>
 
                     ${prod.discount_percent ? `
-                        <span class="text-[10px] font-semibold text-gold-300 bg-gold-900/40 border border-gold-400/30 px-1.5 py-0.5 rounded">
+                        <span class="text-[9px] sm:text-[10px] font-semibold text-gold-300 bg-gold-900/40 border border-gold-400/30 px-1.5 py-0.5 rounded">
                             -${prod.discount_percent}%
                         </span>
                     ` : ''}
@@ -561,7 +566,7 @@ function renderResults() {
                     href="${prod.url}" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    class="btn-platinum-outline w-full flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg"
+                    class="btn-platinum-outline w-full flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 sm:py-2 rounded-lg"
                 >
                     <span>Ver en ${prod.store}</span>
                     <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-platinum-400"></i>

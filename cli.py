@@ -115,11 +115,11 @@ async def run_cli():
     # Table
     table = Table(title=f"Resultados para '{args.query}'", border_style="#334155", box=None)
     table.add_column("#", justify="right", style="dim #64748b", no_wrap=True)
-    table.add_column("Precio (PEN)", justify="right", style="bold #dfc38a")
-    table.add_column("Tienda", style="#cbd5e1")
-    table.add_column("Condición", style="dim #94a3b8")
+    table.add_column("Precio (PEN)", justify="right", style="bold #dfc38a", no_wrap=True)
+    table.add_column("Tienda", style="#cbd5e1", no_wrap=True)
+    table.add_column("Condición", style="dim #94a3b8", no_wrap=True)
     table.add_column("Modelo / Título", style="#f8fafc")
-    table.add_column("Descuento", justify="center", style="#c5a880")
+    table.add_column("Descuento", justify="center", style="#c5a880", no_wrap=True)
 
     for i, item in enumerate(results[:args.limit], 1):
         price_str = f"S/ {item['price']:,.2f}"
@@ -132,7 +132,7 @@ async def run_cli():
                 f"[bold #dfc38a]{price_str}[/bold #dfc38a]",
                 f"[bold #f8fafc]{item['store']}[/bold #f8fafc]",
                 cond_str,
-                f"[bold #f8fafc]{item['title'][:55]}[/bold #f8fafc]",
+                f"[bold #f8fafc]{item['title']}[/bold #f8fafc]",
                 discount_str
             )
         else:
@@ -141,7 +141,7 @@ async def run_cli():
                 price_str,
                 item['store'],
                 cond_str,
-                item['title'][:55],
+                item['title'],
                 discount_str
             )
 
