@@ -29,6 +29,8 @@ const state = {
     paymentFilter: "all", // 'all', 'any_card', 'store_cards'
     verdictFilter: "all", // 'all', 'minimo', 'buen_precio'
     pickupCajamarcaOnly: false,
+    productLocation: "cajamarca",
+    productOnlyDiscounts: false,
     compareItems: [], // array of up to 2 items for side-by-side
     favorites: loadFavoritesFromStorage(),
     groceries: [],
@@ -52,9 +54,13 @@ const searchInput = document.getElementById("search-input");
 const clearBtn = document.getElementById("clear-btn");
 const submitBtn = document.getElementById("submit-btn");
 const sortSelect = document.getElementById("sort-select");
+const productLocationSelect = document.getElementById("product-location-select");
+const toggleProductOnlyDiscounts = document.getElementById("toggle-product-only-discounts");
 const toggleAccessories = document.getElementById("toggle-accessories");
 const toggleRefurbished = document.getElementById("toggle-refurbished");
 const toggleCajamarcaPickup = document.getElementById("toggle-cajamarca-pickup");
+const productPickupLabelText = document.getElementById("product-pickup-label-text");
+const productPickupSubtext = document.getElementById("product-pickup-subtext");
 const storeTogglesContainer = document.getElementById("store-toggles");
 const selectAllStoresBtn = document.getElementById("select-all-stores");
 
@@ -262,6 +268,21 @@ function setupEventListeners() {
         if (state.results.length > 0) performSearch();
     });
 
+    if (productLocationSelect) {
+        productLocationSelect.addEventListener("change", (e) => {
+            state.productLocation = e.target.value;
+            updateProductPickupLabel(state.productLocation);
+            if (searchInput.value.trim()) performSearch();
+        });
+    }
+
+    if (toggleProductOnlyDiscounts) {
+        toggleProductOnlyDiscounts.addEventListener("change", (e) => {
+            state.productOnlyDiscounts = toggleProductOnlyDiscounts.checked;
+            if (searchInput.value.trim()) performSearch();
+        });
+    }
+
     toggleAccessories.addEventListener("change", () => {
         if (searchInput.value.trim()) performSearch();
     });
@@ -308,6 +329,37 @@ function setupEventListeners() {
     });
 
     exportCsvBtn.addEventListener("click", exportToCsv);
+
+    // Initial label sync for locality
+    if (state.productLocation) {
+        updateProductPickupLabel(state.productLocation);
+    }
+}
+
+function updateProductPickupLabel(loc) {
+    if (!productPickupLabelText) return;
+    if (loc === "cajamarca") {
+        productPickupLabelText.textContent = "Retiro Gratis en Cajamarca";
+        if (productPickupSubtext) productPickupSubtext.textContent = "(El Quinde / Real Plaza)";
+    } else if (loc === "lima") {
+        productPickupLabelText.textContent = "Retiro Gratis en Tienda";
+        if (productPickupSubtext) productPickupSubtext.textContent = "(Lima Metropolitana)";
+    } else if (loc === "arequipa") {
+        productPickupLabelText.textContent = "Retiro Gratis en Arequipa";
+        if (productPickupSubtext) productPickupSubtext.textContent = "(Mall Aventura / Cayma)";
+    } else if (loc === "trujillo") {
+        productPickupLabelText.textContent = "Retiro Gratis en Trujillo";
+        if (productPickupSubtext) productPickupSubtext.textContent = "(Mallplaza / Real Plaza)";
+    } else if (loc === "chiclayo_piura") {
+        productPickupLabelText.textContent = "Retiro Gratis en Piura / Chiclayo";
+        if (productPickupSubtext) productPickupSubtext.textContent = "(Mall Aventura / Real Plaza)";
+    } else if (loc === "cusco") {
+        productPickupLabelText.textContent = "Retiro Gratis en Cusco";
+        if (productPickupSubtext) productPickupSubtext.textContent = "(Real Plaza Cusco)";
+    } else {
+        productPickupLabelText.textContent = "Solo retiro gratis en tienda";
+        if (productPickupSubtext) productPickupSubtext.textContent = "(A nivel nacional)";
+    }
 }
 
 function switchView(viewName) {
@@ -500,11 +552,17 @@ async function performSearch() {
     if (state.paymentFilter && state.paymentFilter !== "all") {
         params.append("payment", state.paymentFilter);
     }
-    if (state.verdictFilter && state.verdictFilter !== "all") {
-        params.append("verdict", state.verdictFilter);
+    if (state.productLocation) {
+        params.append("location", state.productLocation);
+    }
+    if (state.productOnlyDiscounts) {
+        params.append("only_discounts", "true");
     }
     if (state.pickupCajamarcaOnly) {
-        params.append("pickup_cajamarca", "true");
+        params.append("pickup_only", "true");
+        if (state.productLocation === "cajamarca") {
+            params.append("pickup_cajamarca", "true");
+        }
     }
 
     try {
@@ -629,8 +687,8 @@ function renderResults() {
                                 ${cheapest.card_name ? `<i class="fa-solid fa-star text-purple-400 text-[10px]"></i> ${cheapest.card_name}` : `<i class="fa-solid fa-check text-emerald-400 text-[10px]"></i> Cualquier tarjeta/Yape`}
                             </span>
                             <span class="text-platinum-600">•</span>
-                            <span class="flex items-center gap-1 ${cheapest.pickup_cajamarca ? 'text-emerald-300 font-medium' : 'text-platinum-400'}">
-                                <i class="fa-solid ${cheapest.pickup_cajamarca ? 'fa-location-dot text-emerald-400' : 'fa-truck text-platinum-500'} text-[10px]"></i>
+                            <span class="flex items-center gap-1 ${cheapest.pickup_available ? 'text-emerald-300 font-medium' : 'text-platinum-400'}">
+                                <i class="fa-solid ${cheapest.pickup_available ? 'fa-location-dot text-emerald-400' : 'fa-truck text-platinum-500'} text-[10px]"></i>
                                 <span>${cheapest.pickup_location}</span>
                             </span>
                         </div>
@@ -751,9 +809,9 @@ function renderResults() {
                         <span class="truncate">${prod.payment_method}</span>
                     </div>
 
-                    <!-- Cajamarca pickup / Courier -->
-                    <div class="flex items-center gap-1 ${prod.pickup_cajamarca ? 'text-emerald-400 font-medium' : 'text-platinum-500'} truncate">
-                        <i class="fa-solid ${prod.pickup_cajamarca ? 'fa-location-dot text-emerald-400' : 'fa-truck text-platinum-600'} text-[9px] flex-shrink-0"></i>
+                    <!-- Store pickup / Courier -->
+                    <div class="flex items-center gap-1 ${prod.pickup_available ? 'text-emerald-400 font-medium' : 'text-platinum-500'} truncate">
+                        <i class="fa-solid ${prod.pickup_available ? 'fa-location-dot text-emerald-400' : 'fa-truck text-platinum-600'} text-[9px] flex-shrink-0"></i>
                         <span class="truncate">${prod.pickup_location}</span>
                     </div>
 

@@ -179,20 +179,49 @@
 
             <!-- Filters Section -->
             <section class="bg-obsidian-900 border border-obsidian-700/70 rounded-xl p-3 sm:p-4 space-y-3 shadow-lg">
-                <!-- Row 1: Sort and Toggles -->
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-                    <!-- Sort Selector -->
-                    <div class="flex items-center gap-2 sm:gap-2.5">
-                        <span class="text-platinum-500 font-medium whitespace-nowrap">Ordenar:</span>
-                        <select id="sort-select" class="w-full sm:w-auto bg-obsidian-950 border border-obsidian-700 text-platinum-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-gold-400 font-medium">
-                            <option value="asc" selected>Menor a mayor precio</option>
-                            <option value="desc">Mayor a menor precio</option>
-                            <option value="discount">Mayor porcentaje de descuento</option>
-                        </select>
+                <!-- Row 1: Location, Sort and Toggles -->
+                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3 text-xs">
+                    <!-- Location & Sort Selectors -->
+                    <div class="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                        <!-- Localidad Selector -->
+                        <div class="flex items-center gap-1.5 sm:gap-2">
+                            <span class="text-platinum-500 font-medium whitespace-nowrap flex items-center gap-1">
+                                <i class="fa-solid fa-location-dot text-gold-400 text-[11px]"></i>
+                                <span>Localidad:</span>
+                            </span>
+                            <select id="product-location-select" class="bg-obsidian-950 border border-obsidian-700 text-platinum-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-gold-400 font-medium text-xs">
+                                <option value="todas">Todo el Perú (Nacional)</option>
+                                <option value="cajamarca" selected>Cajamarca (El Quinde / Real Plaza)</option>
+                                <option value="lima">Lima Metropolitana</option>
+                                <option value="arequipa">Arequipa (Mall Aventura / Cayma)</option>
+                                <option value="trujillo">Trujillo (Mallplaza / Real Plaza)</option>
+                                <option value="chiclayo_piura">Chiclayo / Piura</option>
+                                <option value="cusco">Cusco / Huancayo</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort Selector -->
+                        <div class="flex items-center gap-1.5 sm:gap-2">
+                            <span class="text-platinum-500 font-medium whitespace-nowrap">Ordenar:</span>
+                            <select id="sort-select" class="bg-obsidian-950 border border-obsidian-700 text-platinum-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-gold-400 font-medium text-xs">
+                                <option value="asc" selected>Menor a mayor precio</option>
+                                <option value="desc">Mayor a menor precio</option>
+                                <option value="discount">Mayor descuento (%)</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- General Toggles & Cajamarca Pickup -->
-                    <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-platinum-400">
+                    <!-- General Toggles & Pickup -->
+                    <div class="flex flex-wrap items-center gap-3 sm:gap-3.5 text-platinum-400">
+                        <!-- Solo ofertas con descuento -->
+                        <label class="flex items-center gap-2 cursor-pointer select-none text-platinum-300 hover:text-white transition">
+                            <input type="checkbox" id="toggle-product-only-discounts" class="w-3.5 h-3.5 rounded text-gold-500 bg-obsidian-950 border-obsidian-700 focus:ring-0">
+                            <span class="text-xs font-medium flex items-center gap-1">
+                                <i class="fa-solid fa-percent text-gold-400 text-[10px]"></i>
+                                <span>Solo ofertas con descuento</span>
+                            </span>
+                        </label>
+
                         <label class="flex items-center gap-2 cursor-pointer select-none hover:text-platinum-200 transition">
                             <input type="checkbox" id="toggle-accessories" checked class="w-3.5 h-3.5 rounded text-gold-500 bg-obsidian-950 border-obsidian-700 focus:ring-0">
                             <span class="text-xs">Excluir accesorios</span>
@@ -203,13 +232,13 @@
                             <span class="text-xs">Incluir reacondicionados</span>
                         </label>
 
-                        <!-- Cajamarca Store Pickup Filter -->
+                        <!-- Regional Store Pickup Filter -->
                         <label class="flex items-center gap-2 cursor-pointer select-none text-gold-300 font-medium bg-gold-950/40 border border-gold-400/30 px-2.5 py-1 rounded-lg hover:border-gold-400/60 transition">
                             <input type="checkbox" id="toggle-cajamarca-pickup" class="w-3.5 h-3.5 rounded text-gold-500 bg-obsidian-950 border-obsidian-700 focus:ring-0">
-                            <span class="text-xs flex items-center gap-1.5">
-                                <i class="fa-solid fa-location-dot text-gold-400 text-[11px]"></i>
-                                <span>Retiro Gratis en Cajamarca</span>
-                                <span class="text-[9px] text-platinum-400 hidden lg:inline">(El Quinde / Real Plaza)</span>
+                            <span class="text-xs flex items-center gap-1.5" id="product-pickup-label">
+                                <i class="fa-solid fa-store text-gold-400 text-[11px]"></i>
+                                <span id="product-pickup-label-text">Retiro Gratis en Cajamarca</span>
+                                <span class="text-[9px] text-platinum-400 hidden xl:inline" id="product-pickup-subtext">(El Quinde / Real Plaza)</span>
                             </span>
                         </label>
                     </div>

@@ -33,8 +33,14 @@ ALL_SCRAPERS: Dict[str, BaseScraper] = {
 
 import re
 
-CAJAMARCA_EL_QUINDE_STORES = {"falabella", "ripley", "claro", "entel"}
+CAJAMARCA_EL_QUINDE_STORES = {"falabella", "ripley", "claro", "entel", "metro"}
 CAJAMARCA_REAL_PLAZA_STORES = {"plazavea", "promart", "oechsle"}
+LIMA_STORE_PRESENCE = {"falabella", "ripley", "plazavea", "oechsle", "promart", "metro", "hiraoka", "coolbox", "claro", "entel", "lacuracao", "efe"}
+AREQUIPA_STORE_PRESENCE = {"falabella", "ripley", "plazavea", "oechsle", "promart", "metro", "claro", "entel", "lacuracao", "efe"}
+TRUJILLO_STORE_PRESENCE = {"falabella", "ripley", "plazavea", "promart", "metro", "claro", "entel", "oechsle", "lacuracao", "efe"}
+CHICLAYO_PIURA_STORE_PRESENCE = {"falabella", "ripley", "plazavea", "promart", "metro", "claro", "entel", "oechsle", "lacuracao", "efe"}
+CUSCO_STORE_PRESENCE = {"falabella", "promart", "plazavea", "claro", "entel", "lacuracao", "efe"}
+
 STORE_EXCLUSIVE_CARDS = {
     "falabella": "CMR Falabella",
     "ripley": "Tarjeta Ripley",
@@ -71,7 +77,7 @@ def extract_inferred_specs(title: str, condition: str) -> dict:
     specs["Estado"] = condition
     return specs
 
-def enrich_product_item(item: ProductItem, avg_price: float = 0.0):
+def enrich_product_item(item: ProductItem, avg_price: float = 0.0, location: str = "todas"):
     # 1. Store payment method
     if item.store_id in STORE_EXCLUSIVE_CARDS:
         item.payment_method = STORE_EXCLUSIVE_CARDS[item.store_id]
@@ -80,16 +86,61 @@ def enrich_product_item(item: ProductItem, avg_price: float = 0.0):
         item.payment_method = "Cualquier Tarjeta / Yape / Efectivo"
         item.card_name = None
 
-    # 2. Cajamarca pickup & logistics
-    if item.store_id in CAJAMARCA_EL_QUINDE_STORES:
-        item.pickup_cajamarca = True
-        item.pickup_location = "El Quinde Cajamarca (Retiro Gratis)"
-    elif item.store_id in CAJAMARCA_REAL_PLAZA_STORES:
-        item.pickup_cajamarca = True
-        item.pickup_location = "Real Plaza Cajamarca (Retiro Gratis)"
-    else:
+    # 2. Regional pickup & logistics
+    loc = (location or "todas").strip().lower()
+    if loc == "cajamarca":
+        if item.store_id in CAJAMARCA_EL_QUINDE_STORES:
+            item.pickup_cajamarca = True
+            item.pickup_available = True
+            item.pickup_location = "El Quinde Cajamarca (Retiro Gratis)"
+        elif item.store_id in CAJAMARCA_REAL_PLAZA_STORES:
+            item.pickup_cajamarca = True
+            item.pickup_available = True
+            item.pickup_location = "Real Plaza Cajamarca (Retiro Gratis)"
+        else:
+            item.pickup_cajamarca = False
+            item.pickup_available = False
+            item.pickup_location = "Envío courier a Cajamarca (S/ 15 - 25)"
+    elif loc in ("lima", "miraflores", "surco", "lima_centro", "lima_norte", "lima_sur", "lima_este", "callao"):
         item.pickup_cajamarca = False
-        item.pickup_location = "Envío courier a Cajamarca (S/ 15 - 25)"
+        item.pickup_available = True
+        item.pickup_location = "Retiro Gratis en Tienda (Lima Metropolitana)"
+    elif loc == "arequipa":
+        item.pickup_cajamarca = False
+        if item.store_id in AREQUIPA_STORE_PRESENCE:
+            item.pickup_available = True
+            item.pickup_location = "Mall Aventura / Real Plaza Arequipa (Retiro Gratis)"
+        else:
+            item.pickup_available = False
+            item.pickup_location = "Envío courier a Arequipa (S/ 15 - 20)"
+    elif loc == "trujillo":
+        item.pickup_cajamarca = False
+        if item.store_id in TRUJILLO_STORE_PRESENCE:
+            item.pickup_available = True
+            item.pickup_location = "Mallplaza / Real Plaza Trujillo (Retiro Gratis)"
+        else:
+            item.pickup_available = False
+            item.pickup_location = "Envío courier a Trujillo (S/ 15 - 20)"
+    elif loc == "chiclayo_piura":
+        item.pickup_cajamarca = False
+        if item.store_id in CHICLAYO_PIURA_STORE_PRESENCE:
+            item.pickup_available = True
+            item.pickup_location = "Mall Aventura / Real Plaza (Retiro Gratis)"
+        else:
+            item.pickup_available = False
+            item.pickup_location = "Envío courier a Piura/Chiclayo (S/ 15 - 22)"
+    elif loc == "cusco":
+        item.pickup_cajamarca = False
+        if item.store_id in CUSCO_STORE_PRESENCE:
+            item.pickup_available = True
+            item.pickup_location = "Real Plaza Cusco (Retiro Gratis)"
+        else:
+            item.pickup_available = False
+            item.pickup_location = "Envío courier a Cusco / Huancayo (S/ 18 - 25)"
+    else: # "todas"
+        item.pickup_cajamarca = item.store_id in (CAJAMARCA_EL_QUINDE_STORES | CAJAMARCA_REAL_PLAZA_STORES)
+        item.pickup_available = True
+        item.pickup_location = "Retiro en tienda o envío a todo el Perú"
 
     # 3. Installments
     item.installments_12x = round(item.price / 12, 2)
@@ -139,7 +190,10 @@ class SearchManager:
         sort_by: str = "asc", # 'asc' (menor a mayor), 'desc' (mayor a menor), 'discount'
         payment_filter: Optional[str] = None, # 'all', 'any_card', 'store_cards'
         pickup_cajamarca_only: bool = False,
-        deal_verdict_filter: Optional[str] = None # 'all', 'minimo', 'buen_precio'
+        pickup_only: bool = False,
+        deal_verdict_filter: Optional[str] = None, # 'all', 'minimo', 'buen_precio'
+        location: str = "todas",
+        only_discounts: bool = False
     ) -> Dict[str, Any]:
         active_scrapers = []
         if stores:
@@ -186,13 +240,19 @@ class SearchManager:
         preliminary_prices = [x.price for x in valid_items]
         avg_price = (sum(preliminary_prices) / len(preliminary_prices)) if preliminary_prices else 0.0
 
-        # Enrich all valid items
+        # Enrich all valid items with regional pickup and specs
         for item in valid_items:
-            enrich_product_item(item, avg_price=avg_price)
+            enrich_product_item(item, avg_price=avg_price, location=location)
 
-        # Apply secondary filters (payment method, cajamarca pickup, deal verdict)
+        # Apply secondary filters (discounts, payment method, regional pickup, deal verdict)
         filtered_items: List[ProductItem] = []
         for item in valid_items:
+            # Discount only filter
+            if only_discounts:
+                has_discount = ((item.discount_percent or 0) > 0) or (item.original_price is not None and item.original_price > item.price)
+                if not has_discount:
+                    continue
+
             # Payment method filter
             if payment_filter == "any_card":
                 if item.card_name is not None:
@@ -201,7 +261,11 @@ class SearchManager:
                 if item.card_name is None:
                     continue
 
-            # Cajamarca pickup only filter
+            # Regional store pickup filter
+            if pickup_only and not item.pickup_available:
+                continue
+
+            # Cajamarca pickup only filter (backwards compatibility)
             if pickup_cajamarca_only and not item.pickup_cajamarca:
                 continue
 
@@ -248,6 +312,8 @@ class SearchManager:
         return {
             "query": query,
             "sort_by": sort_by,
+            "location": location,
+            "only_discounts": only_discounts,
             "stats": stats,
             "stores": store_stats,
             "results": [item.to_dict() for item in filtered_items]

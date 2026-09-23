@@ -70,6 +70,9 @@ async def search_products(
     hide_accessories: bool = Query(True, description="Filtrar fundas, cables, micas y accesorios"),
     include_refurbished: bool = Query(True, description="Incluir celulares reacondicionados o seminuevos"),
     payment: Optional[str] = Query(None, description="Filtro de método de pago: 'all', 'any_card', 'store_cards'"),
+    location: Optional[str] = Query("todas", description="Localidad para retiro y disponibilidad (cajamarca, lima, arequipa, trujillo, etc.)"),
+    only_discounts: bool = Query(False, description="Filtrar solo productos con descuento activo"),
+    pickup_only: bool = Query(False, description="Filtrar solo tiendas con retiro gratis en la localidad seleccionada"),
     pickup_cajamarca: bool = Query(False, description="Filtrar solo tiendas con retiro gratis en Cajamarca (El Quinde / Real Plaza)"),
     verdict: Optional[str] = Query(None, description="Filtro de radar: 'all', 'minimo' (Mínimo Histórico), 'buen_precio'"),
     min_price: Optional[float] = Query(None, description="Precio mínimo en soles"),
@@ -87,7 +90,10 @@ async def search_products(
         sort_by=sort,
         payment_filter=payment,
         pickup_cajamarca_only=pickup_cajamarca,
-        deal_verdict_filter=verdict
+        pickup_only=pickup_only,
+        deal_verdict_filter=verdict,
+        location=location or "todas",
+        only_discounts=only_discounts
     )
     return result
 

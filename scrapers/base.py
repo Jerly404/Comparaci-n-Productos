@@ -23,6 +23,7 @@ class ProductItem:
     payment_method: str = "Cualquier Tarjeta / Yape" # "Cualquier Tarjeta / Yape", "Tarjeta CMR", "Tarjeta Ripley", "Tarjeta Oh!"
     card_name: Optional[str] = None
     pickup_cajamarca: bool = False
+    pickup_available: bool = True
     pickup_location: str = "Envío a Domicilio" # "El Quinde Cajamarca", "Real Plaza Cajamarca", "Envío courier a Cajamarca"
     installments_12x: Optional[float] = None
     installments_info: Optional[str] = None
@@ -48,6 +49,7 @@ class ProductItem:
             "payment_method": self.payment_method,
             "card_name": self.card_name,
             "pickup_cajamarca": self.pickup_cajamarca,
+            "pickup_available": self.pickup_available,
             "pickup_location": self.pickup_location,
             "installments_12x": self.installments_12x,
             "installments_info": self.installments_info,

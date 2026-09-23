@@ -259,7 +259,9 @@ async def run_cli():
             include_refurbished=not args.no_refurbished,
             sort_by=args.order,
             payment_filter=args.payment,
-            pickup_cajamarca_only=args.cajamarca
+            pickup_cajamarca_only=args.cajamarca,
+            location=args.location or ("cajamarca" if args.cajamarca else "todas"),
+            only_discounts=args.only_discounts
         )
 
     results = data.get("results", [])
@@ -283,7 +285,7 @@ async def run_cli():
     table.add_column("Tienda", style="#cbd5e1", no_wrap=True)
     table.add_column("Radar", style="bold #f59e0b", no_wrap=True)
     table.add_column("Medio de Pago", style="dim #cbd5e1", no_wrap=True)
-    table.add_column("Retiro Cajamarca", style="#10b981", no_wrap=True)
+    table.add_column("Retiro / Logística", style="#10b981", no_wrap=True)
     table.add_column("Modelo / Título", style="#f8fafc")
     table.add_column("Cuotas 12x", justify="right", style="dim #dfc38a", no_wrap=True)
 
@@ -291,7 +293,7 @@ async def run_cli():
         price_str = f"S/ {item['price']:,.2f}"
         verdict = "🔥 Mínimo" if item.get("deal_verdict") == "Mínimo Histórico" else ("✅ Buen Precio" if item.get("deal_verdict") == "Buen Precio" else "-")
         pay_method = item.get("card_name") or "Cualquier Tarjeta"
-        pickup_loc = "El Quinde (Gratis)" if "El Quinde" in item.get("pickup_location", "") else ("Real Plaza (Gratis)" if "Real Plaza" in item.get("pickup_location", "") else "Courier S/ 15-25")
+        pickup_loc = item.get("pickup_location", "Envío").split("(")[0].strip()
         cuotas = f"S/ {item['installments_12x']:,.2f}" if item.get("installments_12x") else "-"
 
         if i == 1:
