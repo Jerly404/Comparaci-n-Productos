@@ -9,6 +9,10 @@ from .coolbox import CoolboxScraper
 from .oechsle import OechsleScraper
 from .promart import PromartScraper
 from .hiraoka import HiraokaScraper
+from .claro import ClaroScraper
+from .lacuracao import LaCuracaoScraper
+from .efe import TiendasEfeScraper
+from .shopstar import ShopstarScraper
 from .filter_utils import is_valid_phone_item
 
 ALL_SCRAPERS: Dict[str, BaseScraper] = {
@@ -18,7 +22,11 @@ ALL_SCRAPERS: Dict[str, BaseScraper] = {
     "coolbox": CoolboxScraper(),
     "oechsle": OechsleScraper(),
     "promart": PromartScraper(),
-    "hiraoka": HiraokaScraper()
+    "hiraoka": HiraokaScraper(),
+    "claro": ClaroScraper(),
+    "lacuracao": LaCuracaoScraper(),
+    "efe": TiendasEfeScraper(),
+    "shopstar": ShopstarScraper()
 }
 
 class SearchManager:
@@ -52,9 +60,6 @@ class SearchManager:
         max_price: Optional[float] = None,
         sort_by: str = "asc" # 'asc' (menor a mayor), 'desc' (mayor a menor), 'discount'
     ) -> Dict[str, Any]:
-        """
-        Queries selected stores in parallel, filters and sorts items from lowest to highest price.
-        """
         active_scrapers = []
         if stores:
             for s_id in stores:
@@ -101,7 +106,7 @@ class SearchManager:
             filtered_items.sort(key=lambda x: x.price, reverse=True)
         elif sort_by == "discount":
             filtered_items.sort(key=lambda x: (x.discount_percent or 0), reverse=True)
-        else: # 'asc' - menor a mayor (Requerimiento principal del usuario)
+        else: # 'asc' - menor a mayor
             filtered_items.sort(key=lambda x: x.price)
 
         # Compute summary analytics

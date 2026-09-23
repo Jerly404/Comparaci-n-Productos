@@ -6,6 +6,10 @@ from .coolbox import CoolboxScraper
 from .oechsle import OechsleScraper
 from .promart import PromartScraper
 from .hiraoka import HiraokaScraper
+from .claro import ClaroScraper
+from .lacuracao import LaCuracaoScraper
+from .efe import TiendasEfeScraper
+from .shopstar import ShopstarScraper
 from .filter_utils import is_valid_phone_item, is_phone_accessory, matches_query_keywords
 
 __all__ = [
@@ -18,6 +22,10 @@ __all__ = [
     "OechsleScraper",
     "PromartScraper",
     "HiraokaScraper",
+    "ClaroScraper",
+    "LaCuracaoScraper",
+    "TiendasEfeScraper",
+    "ShopstarScraper",
     "is_valid_phone_item",
     "is_phone_accessory",
     "matches_query_keywords"

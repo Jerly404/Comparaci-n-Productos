@@ -11,12 +11,12 @@ console = Console()
 
 async def run_cli():
     parser = argparse.ArgumentParser(
-        description="BuscaFono CLI - Comparador de precios de celulares en Perú (de menor a mayor precio)"
+        description="BuscaFono CLI - Comparador de precios de celulares en Perú"
     )
     parser.add_argument("query", type=str, help="Modelo de celular a buscar (ej: 'iPhone 13', 'Samsung S24')")
     parser.add_argument("--limit", type=int, default=20, help="Límite de resultados a mostrar (default: 20)")
     parser.add_argument("--no-refurbished", action="store_true", help="Excluir celulares reacondicionados")
-    parser.add_argument("--stores", type=str, default=None, help="Tiendas separadas por comas (falabella,ripley,plazavea,coolbox,oechsle,promart,hiraoka)")
+    parser.add_argument("--stores", type=str, default=None, help="Tiendas separadas por comas (falabella,ripley,plazavea,claro,coolbox,lacuracao,efe,hiraoka,oechsle,promart,shopstar)")
     parser.add_argument("--order", choices=["asc", "desc", "discount"], default="asc", help="Orden de precios (default: asc = menor a mayor)")
 
     args = parser.parse_args()
@@ -24,19 +24,19 @@ async def run_cli():
 
     console.print()
     console.print(Panel.fit(
-        f"[bold cyan]🔍 Comparador de Precios de Celulares Perú[/bold cyan]\n"
-        f"[dim]Buscando:[/dim] [bold white]{args.query}[/bold white] | [dim]Orden:[/dim] [green]Menor a Mayor Precio[/green]",
-        border_style="cyan"
+        f"[bold white]BuscaFono[/bold white] [dim]| Comparador de Precios[/dim]\n"
+        f"[dim]Búsqueda:[/dim] [white]{args.query}[/white]  [dim]•[/dim]  [dim]Orden:[/dim] [green]Menor a mayor[/green]",
+        border_style="dim"
     ))
 
     mgr = SearchManager()
 
     with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
+        SpinnerColumn(style="dim white"),
+        TextColumn("[dim]{task.description}[/dim]"),
         transient=True,
     ) as progress:
-        task = progress.add_task(description="[yellow]Consultando tiendas (Falabella, Ripley, PlazaVea, Coolbox, Hiraoka...)...[/yellow]", total=None)
+        task = progress.add_task(description="Consultando tiendas en paralelo...", total=None)
         
         data = await mgr.search_all(
             query=args.query,
@@ -50,38 +50,36 @@ async def run_cli():
     stats = data.get("stats", {})
 
     if not results:
-        console.print(f"[bold red]❌ No se encontraron teléfonos para '{args.query}'.[/bold red]")
+        console.print(f"[red]No se encontraron resultados para '{args.query}'.[/red]\n")
         return
 
-    # Stats banner
+    # Best Deal
     cheapest = stats.get("cheapest_item")
-    console.print(f"[bold green]✨ Mejor Oferta Encontrada:[/bold green] [bold white]{cheapest['title']}[/bold white]")
-    console.print(f"   [bold yellow]S/ {cheapest['price']:,.2f}[/bold yellow] en [bold magenta]{cheapest['store']}[/bold magenta] ({cheapest['condition']})")
-    console.print(f"   [dim]Enlace:[/dim] [underline blue]{cheapest['url']}[/underline blue]")
-    console.print()
+    console.print(f"[dim]PRECIO MÁS BAJO:[/dim] [bold white]{cheapest['title']}[/bold white]")
+    console.print(f"  [bold green]S/ {cheapest['price']:,.2f}[/bold green] en [cyan]{cheapest['store']}[/cyan] ({cheapest['condition']})")
+    console.print(f"  [dim]{cheapest['url']}[/dim]\n")
 
-    # Results Table
-    table = Table(title=f"Resultados para '{args.query}' (Ordenados de menor a mayor precio)", border_style="dim")
-    table.add_column("#", justify="right", style="cyan", no_wrap=True)
-    table.add_column("Precio (PEN)", justify="right", style="bold green")
-    table.add_column("Tienda", style="magenta")
-    table.add_column("Condición", style="yellow")
+    # Table
+    table = Table(title=f"Resultados para '{args.query}'", border_style="dim", box=None)
+    table.add_column("#", justify="right", style="dim", no_wrap=True)
+    table.add_column("Precio (PEN)", justify="right", style="bold white")
+    table.add_column("Tienda", style="cyan")
+    table.add_column("Condición", style="dim")
     table.add_column("Modelo / Título", style="white")
-    table.add_column("Descuento", justify="center", style="red")
+    table.add_column("Descuento", justify="center", style="dim")
 
     for i, item in enumerate(results[:args.limit], 1):
         price_str = f"S/ {item['price']:,.2f}"
         discount_str = f"-{item['discount_percent']}%" if item.get("discount_percent") else "-"
-        cond_style = "[green]Nuevo[/green]" if item["condition"] == "Nuevo" else "[yellow]Reacondicionado[/yellow]"
+        cond_str = "Nuevo" if item["condition"] == "Nuevo" else "Reacondicionado"
         
-        # Highlight top 1
         if i == 1:
             table.add_row(
-                f"[bold gold1]🥇 {i}[/bold gold1]",
-                f"[bold gold1]{price_str}[/bold gold1]",
-                f"[bold]{item['store']}[/bold]",
-                cond_style,
-                f"[bold]{item['title'][:55]}[/bold]",
+                f"[green]{i}[/green]",
+                f"[bold green]{price_str}[/bold green]",
+                f"[bold cyan]{item['store']}[/bold cyan]",
+                cond_str,
+                f"[bold white]{item['title'][:55]}[/bold white]",
                 discount_str
             )
         else:
@@ -89,15 +87,15 @@ async def run_cli():
                 str(i),
                 price_str,
                 item['store'],
-                cond_style,
+                cond_str,
                 item['title'][:55],
                 discount_str
             )
 
     console.print(table)
     console.print(
-        f"[dim]Mostrando {min(len(results), args.limit)} de {stats['total_results']} ofertas. "
-        f"Promedio: S/ {stats['average_price']:,.2f} | Rango: S/ {stats['lowest_price']:,.2f} - S/ {stats['highest_price']:,.2f}[/dim]\n"
+        f"\n[dim]{min(len(results), args.limit)} de {stats['total_results']} opciones. "
+        f"Promedio: S/ {stats['average_price']:,.2f}  •  Rango: S/ {stats['lowest_price']:,.2f} - S/ {stats['highest_price']:,.2f}[/dim]\n"
     )
 
 if __name__ == "__main__":
