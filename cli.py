@@ -16,7 +16,7 @@ async def run_cli():
     parser.add_argument("query", type=str, help="Modelo de celular a buscar (ej: 'iPhone 13', 'Samsung S24')")
     parser.add_argument("--limit", type=int, default=20, help="Límite de resultados a mostrar (default: 20)")
     parser.add_argument("--no-refurbished", action="store_true", help="Excluir celulares reacondicionados")
-    parser.add_argument("--stores", type=str, default=None, help="Tiendas separadas por comas (falabella,ripley,plazavea,claro,coolbox,lacuracao,efe,hiraoka,oechsle,promart,shopstar)")
+    parser.add_argument("--stores", type=str, default=None, help="Tiendas separadas por comas")
     parser.add_argument("--order", choices=["asc", "desc", "discount"], default="asc", help="Orden de precios (default: asc = menor a mayor)")
 
     args = parser.parse_args()
@@ -24,19 +24,19 @@ async def run_cli():
 
     console.print()
     console.print(Panel.fit(
-        f"[bold white]BuscaFono[/bold white] [dim]| Comparador de Precios[/dim]\n"
-        f"[dim]Búsqueda:[/dim] [white]{args.query}[/white]  [dim]•[/dim]  [dim]Orden:[/dim] [green]Menor a mayor[/green]",
-        border_style="dim"
+        f"[bold #dfc38a]BUSCAFONO[/bold #dfc38a] [dim #94a3b8]| Comparador de Precios[/dim #94a3b8]\n"
+        f"[dim #64748b]Búsqueda:[/dim #64748b] [bold #f8fafc]{args.query}[/bold #f8fafc]  [dim #64748b]•[/dim #64748b]  [dim #64748b]Orden:[/dim #64748b] [#dfc38a]Menor a mayor[/] [dim #64748b](12 tiendas)[/dim #64748b]",
+        border_style="#8c734b"
     ))
 
     mgr = SearchManager()
 
     with Progress(
-        SpinnerColumn(style="dim white"),
-        TextColumn("[dim]{task.description}[/dim]"),
+        SpinnerColumn(style="#dfc38a"),
+        TextColumn("[dim #cbd5e1]{task.description}[/dim #cbd5e1]"),
         transient=True,
     ) as progress:
-        task = progress.add_task(description="Consultando tiendas en paralelo...", total=None)
+        task = progress.add_task(description="Consultando 12 tiendas en paralelo...", total=None)
         
         data = await mgr.search_all(
             query=args.query,
@@ -55,18 +55,18 @@ async def run_cli():
 
     # Best Deal
     cheapest = stats.get("cheapest_item")
-    console.print(f"[dim]PRECIO MÁS BAJO:[/dim] [bold white]{cheapest['title']}[/bold white]")
-    console.print(f"  [bold green]S/ {cheapest['price']:,.2f}[/bold green] en [cyan]{cheapest['store']}[/cyan] ({cheapest['condition']})")
-    console.print(f"  [dim]{cheapest['url']}[/dim]\n")
+    console.print(f"[bold #dfc38a]MEJOR PRECIO:[/bold #dfc38a] [bold #f8fafc]{cheapest['title']}[/bold #f8fafc]")
+    console.print(f"  [bold #dfc38a]S/ {cheapest['price']:,.2f}[/bold #dfc38a] en [#cbd5e1]{cheapest['store']}[/#cbd5e1] ([dim]{cheapest['condition']}[/dim])")
+    console.print(f"  [dim #64748b]{cheapest['url']}[/dim #64748b]\n")
 
     # Table
-    table = Table(title=f"Resultados para '{args.query}'", border_style="dim", box=None)
-    table.add_column("#", justify="right", style="dim", no_wrap=True)
-    table.add_column("Precio (PEN)", justify="right", style="bold white")
-    table.add_column("Tienda", style="cyan")
-    table.add_column("Condición", style="dim")
-    table.add_column("Modelo / Título", style="white")
-    table.add_column("Descuento", justify="center", style="dim")
+    table = Table(title=f"Resultados para '{args.query}'", border_style="#334155", box=None)
+    table.add_column("#", justify="right", style="dim #64748b", no_wrap=True)
+    table.add_column("Precio (PEN)", justify="right", style="bold #dfc38a")
+    table.add_column("Tienda", style="#cbd5e1")
+    table.add_column("Condición", style="dim #94a3b8")
+    table.add_column("Modelo / Título", style="#f8fafc")
+    table.add_column("Descuento", justify="center", style="#c5a880")
 
     for i, item in enumerate(results[:args.limit], 1):
         price_str = f"S/ {item['price']:,.2f}"
@@ -75,11 +75,11 @@ async def run_cli():
         
         if i == 1:
             table.add_row(
-                f"[green]{i}[/green]",
-                f"[bold green]{price_str}[/bold green]",
-                f"[bold cyan]{item['store']}[/bold cyan]",
+                f"[bold #dfc38a]{i}[/bold #dfc38a]",
+                f"[bold #dfc38a]{price_str}[/bold #dfc38a]",
+                f"[bold #f8fafc]{item['store']}[/bold #f8fafc]",
                 cond_str,
-                f"[bold white]{item['title'][:55]}[/bold white]",
+                f"[bold #f8fafc]{item['title'][:55]}[/bold #f8fafc]",
                 discount_str
             )
         else:
@@ -94,8 +94,8 @@ async def run_cli():
 
     console.print(table)
     console.print(
-        f"\n[dim]{min(len(results), args.limit)} de {stats['total_results']} opciones. "
-        f"Promedio: S/ {stats['average_price']:,.2f}  •  Rango: S/ {stats['lowest_price']:,.2f} - S/ {stats['highest_price']:,.2f}[/dim]\n"
+        f"\n[dim #64748b]{min(len(results), args.limit)} de {stats['total_results']} ofertas. "
+        f"Promedio: S/ {stats['average_price']:,.2f}  •  Rango: S/ {stats['lowest_price']:,.2f} - S/ {stats['highest_price']:,.2f}[/dim #64748b]\n"
     )
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BuscaFono | Comparador de Celulares en Perú</title>
+    <title>BuscaFono | Comparador de Precios de Celulares</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -12,87 +12,94 @@
             theme: {
                 extend: {
                     colors: {
-                        surface: {
-                            base: '#090a0f',
-                            card: '#12141c',
-                            cardHover: '#181b26',
-                            border: '#1f2433',
-                            borderHover: '#2d3449',
-                            muted: '#64748b'
+                        obsidian: {
+                            950: '#06070a',
+                            900: '#0b0d13',
+                            850: '#10131b',
+                            800: '#171b26',
+                            700: '#222838'
                         },
-                        accent: {
-                            blue: '#3b82f6',
-                            emerald: '#10b981',
-                            subtle: '#1e293b'
+                        gold: {
+                            100: '#f7f2e7',
+                            200: '#edd8b4',
+                            300: '#dfc38a',
+                            400: '#c5a880',
+                            500: '#b09065',
+                            600: '#8c734b',
+                            900: '#261f14'
+                        },
+                        platinum: {
+                            100: '#ffffff',
+                            200: '#f1f5f9',
+                            300: '#e2e8f0',
+                            400: '#cbd5e1',
+                            500: '#94a3b8',
+                            600: '#64748b'
                         }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
                     }
                 }
             }
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="bg-surface-base text-slate-100 min-h-screen flex flex-col antialiased selection:bg-slate-700 selection:text-white">
+<body class="bg-obsidian-950 text-platinum-300 min-h-screen flex flex-col antialiased selection:bg-gold-500/30 selection:text-gold-200">
 
     <!-- Top Navigation -->
-    <header class="border-b border-surface-border bg-surface-base/90 backdrop-blur-md sticky top-0 z-50">
+    <header class="border-b border-obsidian-700/60 bg-obsidian-950/80 backdrop-blur-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-200">
-                    <i class="fa-solid fa-mobile text-sm"></i>
+                <div class="w-8 h-8 rounded-lg bg-obsidian-850 border border-gold-400/30 flex items-center justify-center text-gold-300 shadow-inner">
+                    <i class="fa-solid fa-mobile-screen-button text-xs"></i>
                 </div>
                 <div class="flex items-center gap-2.5">
-                    <span class="font-bold text-base tracking-tight text-white">BuscaFono</span>
-                    <span class="text-[11px] text-slate-400 border-l border-slate-700 pl-2.5 font-medium">Comparador de Precios</span>
+                    <span class="luxury-brand-font font-bold text-base tracking-wider text-platinum-100">BUSCAFONO</span>
+                    <span class="text-[10px] text-gold-400/80 border-l border-obsidian-700 pl-2.5 font-medium uppercase tracking-widest">Perú</span>
                 </div>
             </div>
 
-            <!-- Stores live status -->
-            <div class="flex items-center gap-2 text-xs text-slate-400">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span class="hidden sm:inline font-medium text-slate-300">12 tiendas sincronizadas en vivo</span>
-                <span class="sm:hidden font-medium text-slate-300">12 tiendas</span>
+            <!-- Stores synchronization indicator -->
+            <div class="flex items-center gap-2 text-xs text-platinum-500 font-medium">
+                <span class="w-2 h-2 rounded-full bg-gold-400 shadow-sm shadow-gold-400/50"></span>
+                <span class="hidden sm:inline text-platinum-400">12 tiendas sincronizadas</span>
+                <span class="sm:hidden text-platinum-400">12 tiendas</span>
             </div>
         </div>
     </header>
 
+    <div class="gold-hairline w-full"></div>
+
     <!-- Main Content -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-7">
 
-        <!-- Search Header -->
-        <section class="max-w-3xl mx-auto text-center space-y-3 pt-2">
-            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                Compara precios de celulares en Perú
+        <!-- Hero Section -->
+        <section class="max-w-3xl mx-auto text-center space-y-3 pt-3">
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-white">
+                El celular que buscas al <span class="gold-gradient-text font-bold">menor precio del mercado</span>
             </h1>
-            <p class="text-slate-400 text-sm max-w-xl mx-auto">
-                Búsqueda simultánea en Falabella, Ripley, PlazaVea, Claro, Coolbox, Hiraoka, La Curacao, EFE y más, ordenados de menor a mayor precio.
+            <p class="text-platinum-500 text-sm max-w-xl mx-auto leading-relaxed">
+                Comparamos en tiempo real los catálogos oficiales de Falabella, Ripley, Claro, Entel, PlazaVea, Coolbox, Hiraoka, La Curacao y más.
             </p>
 
             <!-- Search Form -->
-            <form id="search-form" class="mt-5">
-                <div class="relative flex items-center bg-surface-card border border-surface-border hover:border-surface-borderHover focus-within:border-slate-400 focus-within:ring-1 focus-within:ring-slate-400 rounded-xl transition-all shadow-sm">
-                    <div class="pl-4 text-slate-500 text-sm">
+            <form id="search-form" class="mt-6">
+                <div class="relative flex items-center bg-obsidian-900 border border-obsidian-700 hover:border-gold-400/40 focus-within:border-gold-400 focus-within:ring-1 focus-within:ring-gold-400/20 rounded-xl transition-all shadow-xl">
+                    <div class="pl-4 text-gold-400/60 text-sm">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </div>
                     <input 
                         type="text" 
                         id="search-input" 
-                        placeholder="Ingresa modelo (ej: iPhone 13, Galaxy S24, Redmi Note 13)..."
-                        class="w-full bg-transparent px-3.5 py-3.5 text-slate-100 placeholder-slate-500 focus:outline-none text-sm sm:text-base font-normal"
+                        placeholder="Ingresa modelo (ej: iPhone 13, Galaxy S24 FE, Redmi Note 13)..."
+                        class="w-full bg-transparent px-3.5 py-3.5 text-platinum-100 placeholder-platinum-600 focus:outline-none text-sm sm:text-base font-normal"
                         autocomplete="off"
                         required
                     />
                     <button 
                         type="button" 
                         id="clear-btn" 
-                        class="hidden text-slate-500 hover:text-slate-300 px-3 py-2 text-sm transition"
+                        class="hidden text-platinum-500 hover:text-platinum-300 px-3 py-2 text-sm transition"
                         title="Limpiar"
                     >
                         <i class="fa-solid fa-xmark"></i>
@@ -101,10 +108,10 @@
                         <button 
                             type="submit" 
                             id="submit-btn"
-                            class="bg-slate-100 hover:bg-white text-slate-900 font-semibold px-4 py-2.5 rounded-lg text-sm transition flex items-center gap-2 whitespace-nowrap shadow-sm"
+                            class="btn-gold px-5 py-2.5 rounded-lg text-xs uppercase tracking-wider flex items-center gap-2 whitespace-nowrap"
                         >
-                            <span>Buscar</span>
-                            <i class="fa-solid fa-arrow-right text-[11px] text-slate-700"></i>
+                            <span>Comparar</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </button>
                     </div>
                 </div>
@@ -112,23 +119,23 @@
 
             <!-- Quick Suggestions -->
             <div class="flex flex-wrap items-center justify-center gap-1.5 pt-1 text-xs">
-                <span class="text-slate-500 mr-1">Populares:</span>
-                <button type="button" class="quick-chip text-slate-400 hover:text-slate-200 bg-surface-card hover:bg-surface-cardHover border border-surface-border px-2.5 py-1 rounded-md transition" data-query="iPhone 13">iPhone 13</button>
-                <button type="button" class="quick-chip text-slate-400 hover:text-slate-200 bg-surface-card hover:bg-surface-cardHover border border-surface-border px-2.5 py-1 rounded-md transition" data-query="Samsung Galaxy S24">Galaxy S24</button>
-                <button type="button" class="quick-chip text-slate-400 hover:text-slate-200 bg-surface-card hover:bg-surface-cardHover border border-surface-border px-2.5 py-1 rounded-md transition" data-query="Xiaomi Redmi Note 13">Redmi Note 13</button>
-                <button type="button" class="quick-chip text-slate-400 hover:text-slate-200 bg-surface-card hover:bg-surface-cardHover border border-surface-border px-2.5 py-1 rounded-md transition" data-query="iPhone 15">iPhone 15</button>
-                <button type="button" class="quick-chip text-slate-400 hover:text-slate-200 bg-surface-card hover:bg-surface-cardHover border border-surface-border px-2.5 py-1 rounded-md transition" data-query="POCO X6 Pro">POCO X6 Pro</button>
+                <span class="text-platinum-600 mr-1 text-[11px] uppercase tracking-wider">Tendencias:</span>
+                <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2.5 py-1 rounded-md transition" data-query="Samsung Galaxy S24 FE">S24 FE</button>
+                <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2.5 py-1 rounded-md transition" data-query="iPhone 13">iPhone 13</button>
+                <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2.5 py-1 rounded-md transition" data-query="Samsung Galaxy S24">Galaxy S24</button>
+                <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2.5 py-1 rounded-md transition" data-query="Xiaomi Redmi Note 13">Redmi Note 13</button>
+                <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2.5 py-1 rounded-md transition" data-query="iPhone 15">iPhone 15</button>
             </div>
         </section>
 
-        <!-- Filter & Options Toolbar -->
-        <section class="bg-surface-card border border-surface-border rounded-xl p-4 space-y-3.5">
+        <!-- Filters Section -->
+        <section class="bg-obsidian-900 border border-obsidian-700/70 rounded-xl p-4 space-y-3.5 shadow-lg">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 
-                <!-- Order Selector -->
+                <!-- Sort Selector -->
                 <div class="flex items-center gap-2.5">
-                    <span class="text-slate-400 font-medium">Ordenar:</span>
-                    <select id="sort-select" class="bg-surface-base border border-surface-border text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-slate-500 font-medium">
+                    <span class="text-platinum-500 font-medium">Ordenar:</span>
+                    <select id="sort-select" class="bg-obsidian-950 border border-obsidian-700 text-platinum-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-gold-400 font-medium">
                         <option value="asc" selected>Menor a mayor precio</option>
                         <option value="desc">Mayor a menor precio</option>
                         <option value="discount">Mayor porcentaje de descuento</option>
@@ -136,43 +143,43 @@
                 </div>
 
                 <!-- Toggles -->
-                <div class="flex flex-wrap items-center gap-4 text-slate-300">
+                <div class="flex flex-wrap items-center gap-4 text-platinum-400">
                     <label class="flex items-center gap-2 cursor-pointer select-none">
-                        <input type="checkbox" id="toggle-accessories" checked class="w-3.5 h-3.5 rounded text-slate-600 bg-surface-base border-surface-border focus:ring-0">
-                        <span>Excluir accesorios (fundas, cables)</span>
+                        <input type="checkbox" id="toggle-accessories" checked class="w-3.5 h-3.5 rounded text-gold-500 bg-obsidian-950 border-obsidian-700 focus:ring-0">
+                        <span>Excluir accesorios</span>
                     </label>
 
                     <label class="flex items-center gap-2 cursor-pointer select-none">
-                        <input type="checkbox" id="toggle-refurbished" checked class="w-3.5 h-3.5 rounded text-slate-600 bg-surface-base border-surface-border focus:ring-0">
+                        <input type="checkbox" id="toggle-refurbished" checked class="w-3.5 h-3.5 rounded text-gold-500 bg-obsidian-950 border-obsidian-700 focus:ring-0">
                         <span>Incluir reacondicionados</span>
                     </label>
                 </div>
             </div>
 
             <!-- Stores selector pills -->
-            <div class="border-t border-surface-border pt-3 flex flex-wrap items-center gap-2 text-xs">
-                <span class="text-slate-500 font-medium mr-1">Tiendas:</span>
+            <div class="border-t border-obsidian-700/50 pt-3 flex flex-wrap items-center gap-2 text-xs">
+                <span class="text-platinum-600 font-medium mr-1 text-[11px] uppercase tracking-wider">Tiendas:</span>
                 <div id="store-toggles" class="flex flex-wrap gap-1.5">
                     <!-- Populated dynamically via JS -->
                 </div>
-                <button type="button" id="select-all-stores" class="text-slate-400 hover:text-slate-200 text-xs font-medium ml-auto transition">Todas</button>
+                <button type="button" id="select-all-stores" class="text-gold-400/80 hover:text-gold-300 text-xs font-medium ml-auto transition">Todas</button>
             </div>
         </section>
 
         <!-- Loading State -->
         <section id="loading-state" class="hidden py-14 text-center space-y-4">
-            <div class="inline-block w-6 h-6 border-2 border-slate-600 border-t-slate-200 rounded-full animate-spin"></div>
+            <div class="inline-block w-6 h-6 border-2 border-obsidian-700 border-t-gold-400 rounded-full animate-spin"></div>
             <div class="space-y-1">
-                <p class="text-sm font-semibold text-slate-200">Consultando tiendas en paralelo...</p>
-                <p class="text-xs text-slate-500">Recopilando ofertas y comparando precios</p>
+                <p class="text-sm font-semibold text-platinum-200">Consultando tiendas en paralelo...</p>
+                <p class="text-xs text-platinum-500">Recopilando ofertas y ordenando por precio</p>
             </div>
 
             <!-- Skeletons -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-4 max-w-6xl mx-auto">
-                <div class="h-64 rounded-xl bg-surface-card border border-surface-border animate-pulse"></div>
-                <div class="h-64 rounded-xl bg-surface-card border border-surface-border animate-pulse"></div>
-                <div class="h-64 rounded-xl bg-surface-card border border-surface-border animate-pulse"></div>
-                <div class="h-64 rounded-xl bg-surface-card border border-surface-border animate-pulse"></div>
+                <div class="h-64 rounded-xl bg-obsidian-900 border border-obsidian-700/60 animate-pulse"></div>
+                <div class="h-64 rounded-xl bg-obsidian-900 border border-obsidian-700/60 animate-pulse"></div>
+                <div class="h-64 rounded-xl bg-obsidian-900 border border-obsidian-700/60 animate-pulse"></div>
+                <div class="h-64 rounded-xl bg-obsidian-900 border border-obsidian-700/60 animate-pulse"></div>
             </div>
         </section>
 
@@ -188,30 +195,30 @@
                 </div>
 
                 <!-- Metrics Strip -->
-                <div class="bg-surface-card border border-surface-border rounded-xl p-4 flex flex-col justify-between space-y-4">
-                    <div class="flex items-center justify-between border-b border-surface-border pb-2.5">
-                        <span class="text-xs font-semibold text-slate-400">Resumen del mercado</span>
-                        <button id="export-csv-btn" class="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
+                <div class="bg-obsidian-900 border border-obsidian-700/70 rounded-xl p-4 flex flex-col justify-between space-y-4 shadow-lg">
+                    <div class="flex items-center justify-between border-b border-obsidian-700/50 pb-2.5">
+                        <span class="text-xs font-medium uppercase tracking-wider text-platinum-500">Resumen del mercado</span>
+                        <button id="export-csv-btn" class="text-xs text-gold-400/80 hover:text-gold-300 flex items-center gap-1.5 transition">
                             <i class="fa-solid fa-download text-[11px]"></i> Exportar CSV
                         </button>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-surface-base border border-surface-border rounded-lg p-3">
-                            <span class="text-[11px] text-slate-500 block">Menor precio</span>
-                            <span id="stat-lowest" class="text-base font-bold text-emerald-400">S/ 0.00</span>
+                        <div class="bg-obsidian-950 border border-obsidian-700/60 rounded-lg p-3">
+                            <span class="text-[10px] uppercase tracking-wider text-platinum-500 block">Menor precio</span>
+                            <span id="stat-lowest" class="text-base font-bold text-gold-300">S/ 0.00</span>
                         </div>
-                        <div class="bg-surface-base border border-surface-border rounded-lg p-3">
-                            <span class="text-[11px] text-slate-500 block">Promedio</span>
-                            <span id="stat-average" class="text-base font-bold text-slate-200">S/ 0.00</span>
+                        <div class="bg-obsidian-950 border border-obsidian-700/60 rounded-lg p-3">
+                            <span class="text-[10px] uppercase tracking-wider text-platinum-500 block">Promedio</span>
+                            <span id="stat-average" class="text-base font-bold text-platinum-200">S/ 0.00</span>
                         </div>
-                        <div class="bg-surface-base border border-surface-border rounded-lg p-3">
-                            <span class="text-[11px] text-slate-500 block">Mayor precio</span>
-                            <span id="stat-highest" class="text-base font-bold text-slate-400">S/ 0.00</span>
+                        <div class="bg-obsidian-950 border border-obsidian-700/60 rounded-lg p-3">
+                            <span class="text-[10px] uppercase tracking-wider text-platinum-500 block">Mayor precio</span>
+                            <span id="stat-highest" class="text-base font-bold text-platinum-400">S/ 0.00</span>
                         </div>
-                        <div class="bg-surface-base border border-surface-border rounded-lg p-3">
-                            <span class="text-[11px] text-slate-500 block">Ofertas</span>
-                            <span id="stat-total" class="text-base font-bold text-slate-200">0</span>
+                        <div class="bg-obsidian-950 border border-obsidian-700/60 rounded-lg p-3">
+                            <span class="text-[10px] uppercase tracking-wider text-platinum-500 block">Ofertas</span>
+                            <span id="stat-total" class="text-base font-bold text-platinum-100">0</span>
                         </div>
                     </div>
                 </div>
@@ -226,8 +233,8 @@
             <div class="space-y-3 pt-2">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <h2 class="text-base font-bold text-slate-100">Resultados ordenados por precio</h2>
-                        <span id="results-count-badge" class="text-xs text-slate-400 bg-surface-card border border-surface-border px-2 py-0.5 rounded-full font-medium">0 encontrados</span>
+                        <h2 class="text-base font-semibold text-platinum-100">Resultados ordenados por precio</h2>
+                        <span id="results-count-badge" class="text-xs text-gold-300/90 bg-obsidian-900 border border-gold-400/20 px-2 py-0.5 rounded-full font-medium">0 encontrados</span>
                     </div>
                 </div>
 
@@ -240,22 +247,24 @@
 
         <!-- Empty State -->
         <section id="empty-state" class="hidden py-16 text-center space-y-3 max-w-sm mx-auto">
-            <div class="w-10 h-10 rounded-full bg-surface-card border border-surface-border flex items-center justify-center mx-auto text-slate-400 text-sm">
+            <div class="w-10 h-10 rounded-full bg-obsidian-900 border border-obsidian-700 flex items-center justify-center mx-auto text-platinum-500 text-sm">
                 <i class="fa-solid fa-magnifying-glass"></i>
             </div>
-            <p class="text-sm font-semibold text-slate-200">No se encontraron resultados</p>
-            <p class="text-xs text-slate-500">
-                Prueba buscando términos más directos como "iPhone 13", "Galaxy S24" o "Redmi Note 13".
+            <p class="text-sm font-semibold text-platinum-200">No se encontraron resultados</p>
+            <p class="text-xs text-platinum-500">
+                Prueba buscando términos como "iPhone 13", "S24 FE" o "Redmi Note 13".
             </p>
         </section>
 
     </main>
 
-    <!-- Clean Footer -->
-    <footer class="border-t border-surface-border bg-surface-card/40 py-6 mt-12 text-center text-xs text-slate-500">
+    <div class="gold-hairline w-full mt-12"></div>
+
+    <!-- Luxury Footer -->
+    <footer class="bg-obsidian-950 py-6 text-center text-xs text-platinum-600">
         <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p>BuscaFono Perú. Consulta de precios en tiempo real sin afiliación publicitaria.</p>
-            <p class="text-slate-400">Falabella • Ripley • PlazaVea • Claro • Entel • Coolbox • Hiraoka • La Curacao • Tiendas EFE • Oechsle • Promart • Shopstar</p>
+            <p class="luxury-brand-font text-[11px] tracking-wider text-platinum-400">BUSCAFONO PERÚ</p>
+            <p class="text-platinum-500 text-[11px]">Falabella • Ripley • Claro • Entel • PlazaVea • Coolbox • Hiraoka • La Curacao • Tiendas EFE • Oechsle • Promart • Shopstar</p>
         </div>
     </footer>
 

@@ -1,31 +1,113 @@
-/* Minimalist and professional styling */
+/* Luxury Dark & Champagne Gold / Platinum Styling */
 
-/* Custom scrollbars */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --gold-primary: #d4af37;
+    --gold-light: #f3e5ab;
+    --gold-champagne: #c5a880;
+    --gold-muted: #8c734b;
+    --gold-dark: #2a2216;
+    --platinum-white: #f8fafc;
+    --platinum-silver: #cbd5e1;
+    --titanium-dark: #0a0c10;
+    --obsidian: #06070a;
+}
+
+body {
+    background-color: #06070a;
+    background-image: 
+        radial-gradient(ellipse at 50% 0%, rgba(197, 168, 128, 0.07) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 80%, rgba(203, 213, 225, 0.03) 0%, transparent 50%);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #e2e8f0;
+}
+
+.luxury-brand-font {
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.08em;
+}
+
+/* Luxury scrollbars */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: #090a0f;
+    background: #06070a;
 }
 ::-webkit-scrollbar-thumb {
-    background: #1e2433;
+    background: #1e222d;
     border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #2d3449;
+    background: #c5a880;
 }
 
-.product-card {
-    transition: border-color 0.15s ease, transform 0.15s ease, background-color 0.15s ease;
+/* Card aesthetics */
+.luxury-card {
+    background: linear-gradient(180deg, #0e1117 0%, #090b10 100%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.product-card:hover {
-    border-color: #334155;
-    background-color: #151824;
+.luxury-card:hover {
+    border-color: rgba(197, 168, 128, 0.4);
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.8), 0 0 15px -3px rgba(197, 168, 128, 0.08);
+    transform: translateY(-2px);
 }
 
-.best-deal-card {
-    background: linear-gradient(180deg, rgba(18, 20, 28, 0.95) 0%, rgba(13, 15, 22, 0.95) 100%);
-    border: 1px solid #263044;
+/* Best deal spotlight */
+.best-deal-luxury {
+    background: linear-gradient(135deg, rgba(28, 24, 18, 0.7) 0%, rgba(14, 17, 23, 0.95) 100%);
+    border: 1px solid rgba(197, 168, 128, 0.35);
+    box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.9), 0 0 25px -5px rgba(197, 168, 128, 0.12);
+}
+
+/* Gold text gradient */
+.gold-gradient-text {
+    background: linear-gradient(135deg, #f3e5ab 0%, #d4af37 50%, #aa8232 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Platinum silver text gradient */
+.platinum-gradient-text {
+    background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 60%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Luxury button */
+.btn-gold {
+    background: linear-gradient(135deg, #dfc38a 0%, #c5a880 50%, #a8895b 100%);
+    color: #08090c;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-gold:hover {
+    background: linear-gradient(135deg, #ebd4a4 0%, #d4b88f 50%, #b89868 100%);
+    box-shadow: 0 4px 20px -2px rgba(197, 168, 128, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-platinum-outline {
+    background: rgba(18, 22, 30, 0.7);
+    border: 1px solid rgba(203, 213, 225, 0.15);
+    color: #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.btn-platinum-outline:hover {
+    border-color: rgba(197, 168, 128, 0.45);
+    color: #f3e5ab;
+    background: rgba(26, 31, 42, 0.9);
+}
+
+/* Gold hairline divider */
+.gold-hairline {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(197, 168, 128, 0.25), transparent);
 }
