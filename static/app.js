@@ -999,14 +999,14 @@ function renderFoodDeals() {
 
         foodSpotlightContainer.innerHTML = `
             <div class="best-deal-luxury rounded-xl p-3.5 sm:p-5 flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-5 h-full">
-                <div class="w-28 h-28 xs:w-32 xs:h-32 sm:w-40 sm:h-40 flex-shrink-0 bg-obsidian-950 rounded-lg p-1.5 border border-gold-400/30 overflow-hidden flex items-center justify-center">
+                <a href="${cheapest.deal_url}" target="_blank" rel="noopener noreferrer" class="w-28 h-28 xs:w-32 xs:h-32 sm:w-40 sm:h-40 flex-shrink-0 bg-obsidian-950 rounded-lg p-1.5 border border-gold-400/30 overflow-hidden flex items-center justify-center group cursor-pointer block" title="Abrir ${escapeHtml(cheapest.title)} en ${escapeHtml(cheapest.brand)}">
                     <img 
                         src="${cheapest.image_url || DEFAULT_IMAGE_FALLBACK}" 
                         alt="${escapeHtml(cheapest.title)}"
-                        class="w-full h-full object-cover rounded-md"
+                        class="w-full h-full object-cover rounded-md transition-transform duration-300 group-hover:scale-105"
                         onerror="this.src='${DEFAULT_IMAGE_FALLBACK}'"
                     />
-                </div>
+                </a>
 
                 <div class="flex-1 space-y-2 text-center sm:text-left flex flex-col justify-between w-full">
                     <div>
@@ -1027,9 +1027,11 @@ function renderFoodDeals() {
                             </span>
                         </div>
 
-                        <h2 class="text-sm sm:text-base lg:text-lg font-semibold text-white leading-snug mt-1.5">
-                            ${escapeHtml(cheapest.title)}
-                        </h2>
+                        <a href="${cheapest.deal_url}" target="_blank" rel="noopener noreferrer" class="group block mt-1.5">
+                            <h2 class="text-sm sm:text-base lg:text-lg font-semibold text-white group-hover:text-gold-300 transition leading-snug">
+                                ${escapeHtml(cheapest.title)}
+                            </h2>
+                        </a>
 
                         <p class="text-xs text-platinum-400 line-clamp-2 mt-1 leading-relaxed">
                             ${escapeHtml(cheapest.description)}
@@ -1098,11 +1100,17 @@ function renderFoodDeals() {
         const hasCoupon = Boolean(deal.coupon_code);
         const isRappi = deal.platform.includes("Rappi");
         const isYape = deal.platform.includes("Yape");
-        const btnText = isRappi ? "Pedir en Rappi" : (isYape ? "Ver en Yape" : `Ver en ${deal.brand}`);
+        const isPedidosYa = deal.platform.includes("PedidosYa");
+        const btnText = isRappi 
+            ? "Ver plato en Rappi" 
+            : (isPedidosYa 
+                ? "Pedir en PedidosYa" 
+                : (isYape ? `Ver promo en ${deal.brand}` : `Ver plato en ${deal.brand}`));
 
         let platBadgeClass = "bg-obsidian-950 text-platinum-400 border border-obsidian-700/60";
         if (isRappi) platBadgeClass = "bg-[#ff441f]/20 text-[#ff7051] border border-[#ff441f]/40 font-semibold";
         else if (isYape) platBadgeClass = "bg-purple-950/80 text-purple-300 border border-purple-500/40";
+        else if (isPedidosYa) platBadgeClass = "bg-[#ea1d2c]/20 text-[#ea1d2c] border border-[#ea1d2c]/40 font-semibold";
 
         card.innerHTML = `
             <div>
@@ -1126,8 +1134,8 @@ function renderFoodDeals() {
                     </div>
                 </div>
 
-                <!-- Food Image Thumbnail -->
-                <div class="w-full h-32 xs:h-36 sm:h-40 bg-obsidian-950 rounded-lg mb-2 sm:mb-2.5 overflow-hidden border border-obsidian-700/50 relative group">
+                <!-- Food Image Thumbnail (Clickable directly to product) -->
+                <a href="${deal.deal_url}" target="_blank" rel="noopener noreferrer" class="block w-full h-32 xs:h-36 sm:h-40 bg-obsidian-950 rounded-lg mb-2 sm:mb-2.5 overflow-hidden border border-obsidian-700/50 relative group cursor-pointer" title="Abrir ${escapeHtml(deal.title)} en ${escapeHtml(deal.brand)}">
                     <img 
                         src="${deal.image_url || DEFAULT_IMAGE_FALLBACK}" 
                         alt="${escapeHtml(deal.title)}"
@@ -1144,7 +1152,12 @@ function renderFoodDeals() {
                             ${deal.delivery_time}
                         </span>
                     </div>
-                </div>
+                    <div class="absolute inset-0 bg-gold-400/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span class="bg-obsidian-950/90 border border-gold-400/50 text-gold-300 text-[10px] font-semibold px-2 py-1 rounded shadow-lg flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i> Ver producto
+                        </span>
+                    </div>
+                </a>
 
                 <!-- Location tag -->
                 <div class="flex items-center gap-1 text-[10px] text-platinum-500 mb-1.5 truncate">
@@ -1152,11 +1165,13 @@ function renderFoodDeals() {
                     <span class="truncate">${deal.location}</span>
                 </div>
 
-                <!-- Title & Description -->
+                <!-- Title & Description (Clickable title directly to product) -->
                 <div class="space-y-1">
-                    <h3 class="text-xs sm:text-sm font-semibold text-platinum-100 line-clamp-2 leading-snug" title="${escapeHtml(deal.title)}">
-                        ${escapeHtml(deal.title)}
-                    </h3>
+                    <a href="${deal.deal_url}" target="_blank" rel="noopener noreferrer" class="block group">
+                        <h3 class="text-xs sm:text-sm font-semibold text-platinum-100 group-hover:text-gold-300 transition line-clamp-2 leading-snug" title="${escapeHtml(deal.title)}">
+                            ${escapeHtml(deal.title)}
+                        </h3>
+                    </a>
                     <p class="text-[11px] text-platinum-400 line-clamp-2 leading-relaxed">
                         ${escapeHtml(deal.description)}
                     </p>
