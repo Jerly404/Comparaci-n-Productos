@@ -115,7 +115,7 @@ class EntelScraper(BaseScraper):
             matching_links = [
                 (title, url) for title, url in catalog
                 if matches_query_keywords(title, query)
-            ][:4]
+            ][:25]
 
             if not matching_links:
                 return items

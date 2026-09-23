@@ -1,3 +1,4 @@
+import asyncio
 from urllib.parse import quote
 from typing import List
 import httpx
@@ -6,33 +7,46 @@ from .filter_utils import detect_condition
 
 class VTEXBaseScraper(BaseScraper):
     base_url: str = ""
-    max_items: int = 25
 
     async def search(self, query: str, client: httpx.AsyncClient) -> List[ProductItem]:
         items: List[ProductItem] = []
-        try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-                "Accept": "application/json, text/plain, */*",
-                "Accept-Language": "es-PE,es;q=0.9,en;q=0.8"
-            }
-            # VTEX search works best with hyphenated or encoded query
-            formatted_query = query.strip().replace(" ", "-")
-            url = f"{self.base_url}/api/catalog_system/pub/products/search/{quote(formatted_query)}?_from=0&_to={self.max_items-1}&O=OrderByPriceASC"
-            
-            resp = await client.get(url, headers=headers, timeout=12.0)
-            if resp.status_code not in [200, 206]:
-                # Retry with regular space encoding if hyphenated gave nothing
-                url = f"{self.base_url}/api/catalog_system/pub/products/search/{quote(query)}?_from=0&_to={self.max_items-1}&O=OrderByPriceASC"
-                resp = await client.get(url, headers=headers, timeout=12.0)
-                if resp.status_code not in [200, 206]:
-                    return items
+        seen_ids = set()
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "es-PE,es;q=0.9,en;q=0.8"
+        }
 
-            data = resp.json()
-            if not isinstance(data, list):
-                return items
+        # Query page 1 (0-49) and page 2 (50-99) via Full-Text search concurrently
+        encoded_query = quote(query)
+        urls = [
+            f"{self.base_url}/api/catalog_system/pub/products/search?ft={encoded_query}&_from=0&_to=49",
+            f"{self.base_url}/api/catalog_system/pub/products/search?ft={encoded_query}&_from=50&_to=99"
+        ]
 
-            for p in data:
+        async def fetch_vtex_page(u: str):
+            try:
+                resp = await client.get(u, headers=headers, timeout=12.0)
+                if resp.status_code in [200, 206] and resp.text.strip().startswith("["):
+                    data = resp.json()
+                    return data if isinstance(data, list) else []
+            except Exception:
+                pass
+            return []
+
+        pages = await asyncio.gather(*(fetch_vtex_page(u) for u in urls), return_exceptions=True)
+
+        for page_data in pages:
+            if not isinstance(page_data, list):
+                continue
+
+            for p in page_data:
+                prod_id = str(p.get("productId") or "")
+                if prod_id in seen_ids:
+                    continue
+                seen_ids.add(prod_id)
+
                 title = p.get("productName") or p.get("productTitle") or ""
                 brand = p.get("brand") or ""
                 prod_url = p.get("link") or ""
@@ -60,15 +74,14 @@ class VTEXBaseScraper(BaseScraper):
                     original_price = float(list_price)
                     discount_percent = round((1 - (price / original_price)) * 100)
 
-                # Images
                 images = first_sub.get("images") or []
                 image_url = images[0].get("imageUrl", "") if images else ""
 
                 cond = detect_condition(title)
-                prod_id = p.get("productId") or first_sub.get("itemId") or f"{self.store_id}-{len(items)+1}"
+                item_id = prod_id or first_sub.get("itemId") or f"{self.store_id}-{len(items)+1}"
 
                 items.append(ProductItem(
-                    id=f"{self.store_id}-{prod_id}",
+                    id=f"{self.store_id}-{item_id}",
                     title=title,
                     brand=brand,
                     price=float(price),
@@ -83,7 +96,5 @@ class VTEXBaseScraper(BaseScraper):
                     in_stock=(available_qty > 0),
                     condition=cond
                 ))
-        except Exception as e:
-            print(f"[{self.store_name}Scraper Error]: {e}")
 
         return items

@@ -14,14 +14,22 @@ ACCESSORY_KEYWORDS = [
     "monitor", "televisor", "tv", "smart tv", "tablet", "ipad", "laptop", "smartwatch", "reloj inteligente"
 ]
 
+GENERIC_STOP_WORDS = {
+    'de', 'el', 'la', 'con', 'para', 'en', 'los', 'las', 'un', 'una',
+    'celular', 'smartphone', 'telefono', 'teléfono', 'movil', 'móvil', 'equipo', 'nuevo', 'original'
+}
+
 def clean_text(text: str) -> str:
-    """Normalize text by lowering, stripping accents and special characters."""
+    """Normalize text by lowering, stripping accents and standardizing spacing."""
     text = text.lower()
     replacements = {
         'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n'
     }
     for orig, rep in replacements.items():
         text = text.replace(orig, rep)
+    
+    # Normalize patterns like "s 24" -> "s24" or "z flip" -> "zflip"
+    text = re.sub(r'\b([a-z])\s+(\d+)\b', r'\1\2', text)
     return text
 
 def is_phone_accessory(title: str, query: str) -> bool:
@@ -35,7 +43,6 @@ def is_phone_accessory(title: str, query: str) -> bool:
     for word in ACCESSORY_KEYWORDS:
         clean_word = clean_text(word)
         if clean_word in norm_title:
-            # If the user explicitly searched for this accessory word, don't filter it out
             if clean_word in norm_query:
                 continue
             return True
@@ -43,37 +50,48 @@ def is_phone_accessory(title: str, query: str) -> bool:
 
 def matches_query_keywords(title: str, query: str) -> bool:
     """
-    Ensures that key terms from the query are actually present in the title.
-    If the query contains specific model numbers (e.g. '13', '24'), those numbers
-    must be matched so 'Note 13' doesn't return 'Note 11' or 'Note 15'.
+    Ensures that key terms from the query are present in the title.
+    Handles brand names, model numbers, and multi-word product names gracefully.
     """
     norm_title = clean_text(title)
     norm_query = clean_text(query)
 
-    tokens = [t for t in re.split(r'\s+', norm_query) if len(t) >= 2 and t not in ['de', 'el', 'la', 'con', 'para', 'en']]
+    # Split into meaningful tokens excluding generic words
+    raw_tokens = re.split(r'\s+', norm_query)
+    tokens = [t for t in raw_tokens if len(t) >= 2 and t not in GENERIC_STOP_WORDS]
+    if not tokens:
+        tokens = [t for t in raw_tokens if len(t) >= 2]
     if not tokens:
         return True
 
-    # Identify numerical model tokens like '13', '24', '15', '50'
+    # 1. Model number checks (e.g. '13', 's24', 's24fe', '15')
     numeric_tokens = [t for t in tokens if re.search(r'\d', t)]
     for num_token in numeric_tokens:
-        # Check boundary match or substring for numbers like '13' or 's24'
-        if not re.search(r'(?:\b|[a-z])' + re.escape(num_token) + r'(?:\b|[a-z])', norm_title):
+        # Check if num_token or just the digit part is present in title
+        digit_only = re.sub(r'\D', '', num_token)
+        if num_token not in norm_title and digit_only not in norm_title:
             return False
 
-    # Check textual tokens matching
-    text_tokens = [t for t in tokens if not re.search(r'^\d+$', t)]
+    # 2. Textual tokens check (e.g. 'samsung', 'galaxy', 'ultra', 'fe', 'pro')
+    text_tokens = [t for t in tokens if not re.search(r'^\d+$', t) and t not in numeric_tokens]
     if not text_tokens:
         return True
 
-    matched_text = 0
-    for token in text_tokens:
-        if token in norm_title:
-            matched_text += 1
+    # Check how many key text tokens appear in title
+    matched_count = sum(1 for t in text_tokens if t in norm_title)
 
-    # At least 60% of text tokens must match
-    return (matched_text / len(text_tokens)) >= 0.60
+    # Special qualifiers like 'fe', 'pro', 'ultra', 'plus', 'max', 'mini', 'lite'
+    key_qualifiers = {'fe', 'pro', 'ultra', 'plus', 'max', 'mini', 'lite'}
+    for qual in key_qualifiers:
+        if qual in text_tokens and qual not in norm_title:
+            return False
 
+    # If 1 text token, it must match
+    if len(text_tokens) == 1:
+        return matched_count >= 1
+
+    # If multiple text tokens, at least 50% must match (e.g. "samsung galaxy s24" only needs "samsung" or "galaxy" + "s24")
+    return (matched_count / len(text_tokens)) >= 0.50
 
 def detect_condition(title: str) -> str:
     """Detects whether product is new, refurbished, or open box."""
@@ -90,7 +108,6 @@ def is_valid_phone_item(title: str, query: str, price: float, hide_accessories: 
     if hide_accessories:
         if is_phone_accessory(title, query):
             return False
-        # Smartphones rarely cost less than ~S/ 120
         norm_query = clean_text(query)
         is_accessory_query = any(clean_text(w) in norm_query for w in ACCESSORY_KEYWORDS)
         if not is_accessory_query and price < min_price:
