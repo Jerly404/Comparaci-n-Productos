@@ -6,7 +6,9 @@ const state = {
     results: [],
     stats: null,
     storeBreakdown: {},
-    loading: false
+    loading: false,
+    events: [],
+    activeView: "comparator"
 };
 
 // DOM Elements
@@ -19,6 +21,21 @@ const toggleAccessories = document.getElementById("toggle-accessories");
 const toggleRefurbished = document.getElementById("toggle-refurbished");
 const storeTogglesContainer = document.getElementById("store-toggles");
 const selectAllStoresBtn = document.getElementById("select-all-stores");
+
+const tabComparator = document.getElementById("tab-comparator");
+const tabEvents = document.getElementById("tab-events");
+const linkToEvents = document.getElementById("link-to-events");
+const comparatorView = document.getElementById("comparator-view");
+const eventsView = document.getElementById("events-view");
+const eventsGrid = document.getElementById("events-grid");
+const heroCountdownPill = document.getElementById("hero-countdown-pill");
+
+// Black Friday countdown elements
+const bfDays = document.getElementById("bf-days");
+const bfHours = document.getElementById("bf-hours");
+const bfMinutes = document.getElementById("bf-minutes");
+const bfSeconds = document.getElementById("bf-seconds");
+const blackFridayBadge = document.getElementById("black-friday-badge");
 
 const loadingState = document.getElementById("loading-state");
 const resultsWrapper = document.getElementById("results-wrapper");
@@ -37,8 +54,9 @@ const resultsCountBadge = document.getElementById("results-count-badge");
 const DEFAULT_IMAGE_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='64' height='64' fill='none' stroke='%238c734b' stroke-width='1.5'%3E%3Crect x='5' y='2' width='14' height='20' rx='2'/%3E%3Cline x1='12' y1='18' x2='12' y2='18.01' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E";
 
 document.addEventListener("DOMContentLoaded", async () => {
-    await fetchStores();
+    await Promise.all([fetchStores(), fetchEvents()]);
     setupEventListeners();
+    startCountdownTimers();
 });
 
 async function fetchStores() {
@@ -51,6 +69,18 @@ async function fetchStores() {
         }
     } catch (e) {
         console.error("Error loading stores:", e);
+    }
+}
+
+async function fetchEvents() {
+    try {
+        const resp = await fetch("/api/events");
+        if (resp.ok) {
+            state.events = await resp.json();
+            renderEventsGrid();
+        }
+    } catch (e) {
+        console.error("Error loading events:", e);
     }
 }
 
@@ -90,6 +120,14 @@ function renderStoreToggles() {
 }
 
 function setupEventListeners() {
+    // Tab switching
+    tabComparator.addEventListener("click", () => switchView("comparator"));
+    tabEvents.addEventListener("click", () => switchView("events"));
+    if (linkToEvents) {
+        linkToEvents.addEventListener("click", () => switchView("events"));
+    }
+
+    // Search form
     searchForm.addEventListener("submit", (e) => {
         e.preventDefault();
         performSearch();
@@ -113,6 +151,9 @@ function setupEventListeners() {
         chip.addEventListener("click", () => {
             searchInput.value = chip.dataset.query;
             clearBtn.classList.remove("hidden");
+            if (state.activeView !== "comparator") {
+                switchView("comparator");
+            }
             performSearch();
         });
     });
@@ -136,6 +177,165 @@ function setupEventListeners() {
     });
 
     exportCsvBtn.addEventListener("click", exportToCsv);
+}
+
+function switchView(viewName) {
+    state.activeView = viewName;
+    if (viewName === "comparator") {
+        comparatorView.classList.remove("hidden");
+        eventsView.classList.add("hidden");
+
+        tabComparator.className = "px-3 py-1.5 rounded-lg transition text-gold-300 bg-obsidian-850 border border-gold-400/30 font-semibold shadow-sm flex items-center gap-1.5";
+        tabEvents.className = "px-3 py-1.5 rounded-lg transition text-platinum-400 hover:text-gold-200 hover:bg-obsidian-850 flex items-center gap-1.5";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        comparatorView.classList.add("hidden");
+        eventsView.classList.remove("hidden");
+
+        tabEvents.className = "px-3 py-1.5 rounded-lg transition text-gold-300 bg-obsidian-850 border border-gold-400/30 font-semibold shadow-sm flex items-center gap-1.5";
+        tabComparator.className = "px-3 py-1.5 rounded-lg transition text-platinum-400 hover:text-gold-200 hover:bg-obsidian-850 flex items-center gap-1.5";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+// Live Countdown Timers
+function startCountdownTimers() {
+    updateAllCountdowns();
+    setInterval(updateAllCountdowns, 1000);
+}
+
+function getTimeRemaining(targetDateStr) {
+    const target = new Date(targetDateStr).getTime();
+    const now = new Date().getTime();
+    const diff = target - now;
+
+    if (diff <= 0) {
+        return { isStarted: true, days: 0, hours: 0, minutes: 0, seconds: 0 };
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    return { isStarted: false, days, hours, minutes, seconds };
+}
+
+function updateAllCountdowns() {
+    // 1. Black Friday 2026 Countdown
+    const bfEvent = state.events.find(e => e.id === "black-friday");
+    if (bfEvent && bfDays && bfHours && bfMinutes && bfSeconds) {
+        const remaining = getTimeRemaining(bfEvent.start_date);
+        bfDays.textContent = String(remaining.days).padStart(2, '0');
+        bfHours.textContent = String(remaining.hours).padStart(2, '0');
+        bfMinutes.textContent = String(remaining.minutes).padStart(2, '0');
+        bfSeconds.textContent = String(remaining.seconds).padStart(2, '0');
+
+        if (heroCountdownPill) {
+            heroCountdownPill.textContent = `${remaining.days}d ${remaining.hours}h restantes`;
+        }
+        if (blackFridayBadge) {
+            blackFridayBadge.textContent = `${remaining.days}d`;
+        }
+    }
+
+    // 2. Individual Event Cards Timers
+    document.querySelectorAll(".event-countdown-pill").forEach(el => {
+        const targetStr = el.dataset.startDate;
+        if (targetStr) {
+            const rem = getTimeRemaining(targetStr);
+            if (rem.isStarted) {
+                el.innerHTML = `<span class="text-emerald-400 font-bold">¡En curso hoy!</span>`;
+            } else {
+                el.innerHTML = `Faltan <span class="font-bold text-gold-300">${rem.days}d ${rem.hours}h ${rem.minutes}m ${rem.seconds}s</span>`;
+            }
+        }
+    });
+}
+
+function renderEventsGrid() {
+    if (!eventsGrid || !state.events) return;
+    eventsGrid.innerHTML = "";
+
+    state.events.forEach(evt => {
+        const card = document.createElement("div");
+        card.className = "luxury-card rounded-xl p-5 flex flex-col justify-between space-y-4 shadow-lg";
+
+        const storesList = Array.isArray(evt.stores) ? evt.stores : [];
+        const isBlackFriday = evt.id === "black-friday";
+
+        card.innerHTML = `
+            <div class="space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-[10px] font-semibold text-gold-300 bg-gold-900/60 border border-gold-400/40 px-2 py-0.5 rounded uppercase tracking-wider">
+                        ${evt.badge}
+                    </span>
+                    <span class="text-[11px] text-platinum-500 font-mono">
+                        ${evt.discount_estimate}
+                    </span>
+                </div>
+
+                <div class="space-y-1">
+                    <h3 class="text-base sm:text-lg font-bold text-white tracking-tight">
+                        ${evt.name}
+                    </h3>
+                    <div class="flex items-center gap-1.5 text-xs text-gold-400/90 font-medium">
+                        <i class="fa-regular fa-calendar text-[11px]"></i>
+                        <span>${evt.display_date}</span>
+                    </div>
+                </div>
+
+                <!-- Live countdown badge -->
+                <div class="bg-obsidian-950 border border-obsidian-700/80 rounded-lg p-2.5 flex items-center justify-between text-xs">
+                    <span class="text-platinum-500 text-[11px]">Cuenta regresiva:</span>
+                    <div class="event-countdown-pill text-xs font-mono text-platinum-300" data-start-date="${evt.start_date}">
+                        Cargando...
+                    </div>
+                </div>
+
+                <p class="text-xs text-platinum-400 leading-relaxed">
+                    ${evt.description}
+                </p>
+
+                <!-- Participating Stores -->
+                <div class="space-y-1.5 pt-1">
+                    <span class="text-[10px] uppercase tracking-wider text-platinum-500 block font-semibold">
+                        Tiendas participantes:
+                    </span>
+                    <div class="flex flex-wrap gap-1 text-[11px] text-platinum-400">
+                        ${storesList.slice(0, 5).map(s => `
+                            <span class="px-2 py-0.5 rounded bg-obsidian-850 border border-obsidian-700 text-platinum-300 text-[10px]">${s}</span>
+                        `).join('')}
+                        ${storesList.length > 5 ? `<span class="px-1.5 py-0.5 text-[10px] text-platinum-500">+${storesList.length - 5} más</span>` : ''}
+                    </div>
+                </div>
+
+                <!-- Pro Tip -->
+                <div class="bg-obsidian-950/80 border-l-2 border-gold-400/80 p-2.5 rounded-r-lg text-[11px] text-platinum-300 space-y-0.5">
+                    <span class="text-gold-300 font-bold uppercase tracking-wider text-[9px] block">Consejo para celulares:</span>
+                    <p class="text-platinum-400 text-[11px] leading-snug">${evt.tips}</p>
+                </div>
+            </div>
+
+            <!-- Action button -->
+            <div class="pt-3 border-t border-obsidian-700/60">
+                <button type="button" class="btn-platinum-outline w-full py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 jump-to-compare-btn">
+                    <span>Comparar precios actuales</span>
+                    <i class="fa-solid fa-arrow-right text-[10px] text-gold-400"></i>
+                </button>
+            </div>
+        `;
+
+        const jumpBtn = card.querySelector(".jump-to-compare-btn");
+        jumpBtn.addEventListener("click", () => {
+            switchView("comparator");
+            searchInput.focus();
+        });
+
+        eventsGrid.appendChild(card);
+    });
+
+    updateAllCountdowns();
 }
 
 async function performSearch() {

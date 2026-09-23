@@ -4,6 +4,7 @@ from fastapi import FastAPI, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from scrapers.manager import SearchManager
+from scrapers.events_data import get_events
 
 app = FastAPI(
     title="Comparador de Precios de Celulares Perú",
@@ -25,6 +26,11 @@ async def root():
 async def get_stores():
     """List all supported Peruvian stores."""
     return manager.get_supported_stores()
+
+@app.get("/api/events")
+async def get_discount_events():
+    """List major upcoming discount events in Peru (Black Friday, Cyber Wow, Cyber Days)."""
+    return get_events()
 
 @app.get("/api/search")
 async def search_phones(
