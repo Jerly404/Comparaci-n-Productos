@@ -8,10 +8,17 @@ const state = {
     storeBreakdown: {},
     loading: false,
     events: [],
-    activeView: "comparator"
+    activeView: "comparator",
+    foodCategory: "todas",
+    foodPlatform: "todas",
+    foodQuery: "",
+    foodSort: "asc",
+    foodDeals: [],
+    foodStats: null,
+    foodCategories: {}
 };
 
-// DOM Elements
+// DOM Elements - Phones & Stores
 const searchForm = document.getElementById("search-form");
 const searchInput = document.getElementById("search-input");
 const clearBtn = document.getElementById("clear-btn");
@@ -23,9 +30,11 @@ const storeTogglesContainer = document.getElementById("store-toggles");
 const selectAllStoresBtn = document.getElementById("select-all-stores");
 
 const tabComparator = document.getElementById("tab-comparator");
+const tabFood = document.getElementById("tab-food");
 const tabEvents = document.getElementById("tab-events");
 const linkToEvents = document.getElementById("link-to-events");
 const comparatorView = document.getElementById("comparator-view");
+const foodView = document.getElementById("food-view");
 const eventsView = document.getElementById("events-view");
 const eventsGrid = document.getElementById("events-grid");
 const heroCountdownPill = document.getElementById("hero-countdown-pill");
@@ -51,11 +60,27 @@ const statHighest = document.getElementById("stat-highest");
 const statTotal = document.getElementById("stat-total");
 const resultsCountBadge = document.getElementById("results-count-badge");
 
+// DOM Elements - Food Deals & Yape Promos
+const foodSearchInput = document.getElementById("food-search-input");
+const foodClearBtn = document.getElementById("food-clear-btn");
+const foodSortSelect = document.getElementById("food-sort-select");
+const foodGrid = document.getElementById("food-grid");
+const foodSpotlightContainer = document.getElementById("food-spotlight-container");
+const foodResultsContainer = document.getElementById("food-results-container");
+const foodEmptyState = document.getElementById("food-empty-state");
+const foodStatLowest = document.getElementById("food-stat-lowest");
+const foodStatAvg = document.getElementById("food-stat-avg");
+const foodStatHighest = document.getElementById("food-stat-highest");
+const foodStatTotal = document.getElementById("food-stat-total");
+const foodCountBadge = document.getElementById("food-count-badge");
+const foodGridTitle = document.getElementById("food-grid-title");
+
 const DEFAULT_IMAGE_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='64' height='64' fill='none' stroke='%238c734b' stroke-width='1.5'%3E%3Crect x='5' y='2' width='14' height='20' rx='2'/%3E%3Cline x1='12' y1='18' x2='12' y2='18.01' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E";
 
 document.addEventListener("DOMContentLoaded", async () => {
-    await Promise.all([fetchStores(), fetchEvents()]);
+    await Promise.all([fetchStores(), fetchEvents(), fetchFoodDeals()]);
     setupEventListeners();
+    setupFoodEventListeners();
     startCountdownTimers();
 });
 
@@ -122,6 +147,9 @@ function renderStoreToggles() {
 function setupEventListeners() {
     // Tab switching
     tabComparator.addEventListener("click", () => switchView("comparator"));
+    if (tabFood) {
+        tabFood.addEventListener("click", () => switchView("food"));
+    }
     tabEvents.addEventListener("click", () => switchView("events"));
     if (linkToEvents) {
         linkToEvents.addEventListener("click", () => switchView("events"));
@@ -184,21 +212,25 @@ function switchView(viewName) {
     const activeTab = "px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition text-gold-300 bg-obsidian-850 border border-gold-400/30 font-semibold shadow-sm flex items-center gap-1.5 whitespace-nowrap";
     const inactiveTab = "px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition text-platinum-400 hover:text-gold-200 hover:bg-obsidian-850 flex items-center gap-1.5 whitespace-nowrap";
 
+    comparatorView.classList.add("hidden");
+    if (foodView) foodView.classList.add("hidden");
+    eventsView.classList.add("hidden");
+
+    tabComparator.className = inactiveTab;
+    if (tabFood) tabFood.className = inactiveTab;
+    tabEvents.className = inactiveTab;
+
     if (viewName === "comparator") {
         comparatorView.classList.remove("hidden");
-        eventsView.classList.add("hidden");
-
         tabComparator.className = activeTab;
-        tabEvents.className = inactiveTab;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-        comparatorView.classList.add("hidden");
+    } else if (viewName === "food") {
+        if (foodView) foodView.classList.remove("hidden");
+        if (tabFood) tabFood.className = activeTab;
+    } else if (viewName === "events") {
         eventsView.classList.remove("hidden");
-
         tabEvents.className = activeTab;
-        tabComparator.className = inactiveTab;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // Live Countdown Timers
@@ -612,3 +644,388 @@ function escapeHtml(text) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
+
+// =========================================================
+// FOOD DEALS & YAPE PROMOS SECTION
+// =========================================================
+
+async function fetchFoodDeals() {
+    try {
+        const params = new URLSearchParams();
+        if (state.foodCategory && state.foodCategory !== "todas") {
+            params.append("category", state.foodCategory);
+        }
+        if (state.foodPlatform && state.foodPlatform !== "todas") {
+            params.append("platform", state.foodPlatform);
+        }
+        if (state.foodQuery && state.foodQuery.trim()) {
+            params.append("q", state.foodQuery.trim());
+        }
+        params.append("sort", state.foodSort || "asc");
+
+        const resp = await fetch(`/api/food-deals?${params.toString()}`);
+        if (!resp.ok) throw new Error("Failed to fetch food deals");
+        const data = await resp.json();
+
+        state.foodDeals = data.results || [];
+        state.foodStats = data.stats || {};
+        state.foodCategories = data.categories || {};
+
+        updateFoodCategoryBadges();
+        renderFoodDeals();
+    } catch (err) {
+        console.error("Error fetching food deals:", err);
+    }
+}
+
+function updateFoodCategoryBadges() {
+    let totalAll = 0;
+    const catKeys = ["pizza", "burger", "pollo", "makis", "chifa", "postres"];
+    
+    catKeys.forEach(cat => {
+        const count = state.foodCategories[cat] || 0;
+        totalAll += count;
+        const el = document.getElementById(`cat-count-${cat}`);
+        if (el) el.textContent = count;
+    });
+
+    const totalEl = document.getElementById("cat-count-todas");
+    if (totalEl) totalEl.textContent = totalAll;
+}
+
+function renderFoodDeals() {
+    if (!foodGrid) return;
+
+    if (!state.foodDeals || state.foodDeals.length === 0) {
+        if (foodResultsContainer) foodResultsContainer.classList.add("hidden");
+        if (foodEmptyState) foodEmptyState.classList.remove("hidden");
+        return;
+    }
+
+    if (foodResultsContainer) foodResultsContainer.classList.remove("hidden");
+    if (foodEmptyState) foodEmptyState.classList.add("hidden");
+
+    // 1. Stats updates
+    if (foodStatLowest) foodStatLowest.textContent = formatPrice(state.foodStats.lowest_price);
+    if (foodStatAvg) foodStatAvg.textContent = formatPrice(state.foodStats.average_price);
+    if (foodStatHighest) foodStatHighest.textContent = formatPrice(state.foodStats.highest_price);
+    if (foodStatTotal) foodStatTotal.textContent = String(state.foodStats.total_results);
+    if (foodCountBadge) foodCountBadge.textContent = `${state.foodDeals.length} promociones`;
+
+    // 2. Spotlight Best Food Deal Card
+    const cheapest = state.foodStats.cheapest_item || state.foodDeals[0];
+    if (foodSpotlightContainer && cheapest) {
+        const hasCoupon = Boolean(cheapest.coupon_code);
+        foodSpotlightContainer.innerHTML = `
+            <div class="best-deal-luxury rounded-xl p-3.5 sm:p-5 flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-5 h-full">
+                <div class="w-28 h-28 xs:w-32 xs:h-32 sm:w-40 sm:h-40 flex-shrink-0 bg-obsidian-950 rounded-lg p-1.5 border border-gold-400/30 overflow-hidden flex items-center justify-center">
+                    <img 
+                        src="${cheapest.image_url || DEFAULT_IMAGE_FALLBACK}" 
+                        alt="${escapeHtml(cheapest.title)}"
+                        class="w-full h-full object-cover rounded-md"
+                        onerror="this.src='${DEFAULT_IMAGE_FALLBACK}'"
+                    />
+                </div>
+
+                <div class="flex-1 space-y-2 text-center sm:text-left flex flex-col justify-between w-full">
+                    <div>
+                        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
+                            <span class="text-[9px] sm:text-[10px] font-semibold text-gold-300 bg-gold-900/60 border border-gold-400/40 px-2 py-0.5 rounded uppercase tracking-wider">
+                                Mejor Precio Comidas
+                            </span>
+                            <span class="text-[10px] sm:text-[11px] font-medium text-purple-200 bg-purple-950/80 border border-purple-500/40 px-2 py-0.5 rounded flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${cheapest.platform_color}"></span>
+                                ${cheapest.platform}
+                            </span>
+                            <span class="text-[10px] sm:text-[11px] font-medium text-platinum-300 bg-obsidian-850 border border-obsidian-700 px-2 py-0.5 rounded">
+                                ${cheapest.brand}
+                            </span>
+                        </div>
+
+                        <h2 class="text-sm sm:text-base lg:text-lg font-semibold text-white leading-snug mt-1.5">
+                            ${escapeHtml(cheapest.title)}
+                        </h2>
+
+                        <p class="text-xs text-platinum-400 line-clamp-2 mt-1 leading-relaxed">
+                            ${escapeHtml(cheapest.description)}
+                        </p>
+
+                        <div class="flex flex-wrap items-baseline justify-center sm:justify-start gap-2 pt-2">
+                            <span class="text-xl sm:text-2xl font-bold text-gold-300">
+                                ${formatPrice(cheapest.price)}
+                            </span>
+                            ${cheapest.original_price ? `
+                                <span class="text-xs text-platinum-500 line-through">
+                                    ${formatPrice(cheapest.original_price)}
+                                </span>
+                            ` : ''}
+                            ${cheapest.discount_percent ? `
+                                <span class="text-xs text-gold-400 font-semibold bg-gold-900/40 border border-gold-400/30 px-1.5 py-0.5 rounded">
+                                    -${cheapest.discount_percent}% de descuento
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="pt-2 sm:pt-1.5 flex flex-wrap items-center gap-2">
+                        ${hasCoupon ? `
+                            <button 
+                                type="button" 
+                                onclick="copyCouponToClipboard('${cheapest.coupon_code}', this)"
+                                class="btn-platinum-outline px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition text-gold-300 border-gold-400/40 hover:bg-gold-900/30"
+                                title="Copiar cupón"
+                            >
+                                <i class="fa-regular fa-copy text-[11px]"></i>
+                                <span>Cupón: <strong class="font-mono text-white">${cheapest.coupon_code}</strong></span>
+                            </button>
+                        ` : ''}
+                        <a 
+                            href="${cheapest.deal_url}" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            class="btn-gold px-4 py-2 rounded-lg text-xs uppercase tracking-wider inline-flex items-center justify-center gap-2 shadow-md flex-1 sm:flex-initial"
+                        >
+                            <span>Aprovechar oferta en ${cheapest.brand}</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 3. Render Food Cards Grid
+    foodGrid.innerHTML = "";
+    state.foodDeals.forEach((deal, index) => {
+        const card = document.createElement("div");
+        card.className = "luxury-card rounded-xl p-3 sm:p-4 flex flex-col justify-between";
+
+        const isRank1 = (index === 0 && (state.foodSort || "asc") === "asc");
+        const hasCoupon = Boolean(deal.coupon_code);
+
+        card.innerHTML = `
+            <div>
+                <!-- Top Brand & Platform Info -->
+                <div class="flex items-center justify-between gap-1.5 mb-2 sm:mb-2.5">
+                    <div class="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-platinum-300 truncate">
+                        <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background-color: ${deal.platform_color || '#c5a880'}"></span>
+                        <span class="truncate font-semibold">${escapeHtml(deal.brand)}</span>
+                    </div>
+                    <div class="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-[11px] flex-shrink-0">
+                        ${isRank1 ? `
+                            <span class="text-gold-300 font-semibold text-[9px] sm:text-[10px] bg-gold-900/60 border border-gold-400/40 px-1.5 py-0.2 rounded uppercase tracking-wider">
+                                Más Económico
+                            </span>
+                        ` : `
+                            <span class="text-platinum-500 font-medium text-[10px]">#${index + 1}</span>
+                        `}
+                        <span class="text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded font-medium ${
+                            deal.platform.includes('Yape') 
+                                ? 'bg-purple-950/80 text-purple-300 border border-purple-500/40' 
+                                : 'bg-obsidian-950 text-platinum-400 border border-obsidian-700/60'
+                        }">
+                            ${deal.platform}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Food Image Thumbnail -->
+                <div class="w-full h-32 xs:h-36 sm:h-40 bg-obsidian-950 rounded-lg mb-2.5 sm:mb-3 overflow-hidden border border-obsidian-700/50 relative group">
+                    <img 
+                        src="${deal.image_url || DEFAULT_IMAGE_FALLBACK}" 
+                        alt="${escapeHtml(deal.title)}"
+                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        onerror="this.src='${DEFAULT_IMAGE_FALLBACK}'"
+                    />
+                    <div class="absolute top-2 left-2">
+                        <span class="text-[9px] font-medium px-2 py-0.5 rounded-md bg-obsidian-950/85 backdrop-blur-sm border border-obsidian-700 text-platinum-300">
+                            ${escapeHtml(deal.category_name)}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Title & Description -->
+                <div class="space-y-1">
+                    <h3 class="text-xs sm:text-sm font-semibold text-platinum-100 line-clamp-2 leading-snug" title="${escapeHtml(deal.title)}">
+                        ${escapeHtml(deal.title)}
+                    </h3>
+                    <p class="text-[11px] text-platinum-400 line-clamp-2 leading-relaxed">
+                        ${escapeHtml(deal.description)}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Price, Coupon & Action Button -->
+            <div class="pt-2.5 sm:pt-3 border-t border-obsidian-700/60 mt-2.5 sm:mt-3 space-y-2.5">
+                <!-- Price row -->
+                <div class="flex items-baseline justify-between gap-1">
+                    <div>
+                        <div class="text-base sm:text-lg font-bold ${isRank1 ? 'text-gold-300' : 'text-white'}">
+                            ${formatPrice(deal.price)}
+                        </div>
+                        ${deal.original_price ? `
+                            <div class="text-[10px] sm:text-[11px] text-platinum-500 line-through">
+                                ${formatPrice(deal.original_price)}
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    ${deal.discount_percent ? `
+                        <span class="text-[9px] sm:text-[10px] font-semibold text-gold-300 bg-gold-900/40 border border-gold-400/30 px-1.5 py-0.5 rounded">
+                            -${deal.discount_percent}%
+                        </span>
+                    ` : ''}
+                </div>
+
+                <!-- Coupon Code if available -->
+                ${hasCoupon ? `
+                    <div class="bg-obsidian-950 border border-gold-400/25 rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5 text-[11px] text-platinum-400 truncate">
+                            <i class="fa-solid fa-ticket text-gold-400 text-[10px] flex-shrink-0"></i>
+                            <span class="font-mono text-gold-200 font-bold truncate">${deal.coupon_code}</span>
+                        </div>
+                        <button 
+                            type="button" 
+                            onclick="copyCouponToClipboard('${deal.coupon_code}', this)"
+                            class="text-[10px] text-gold-400 hover:text-gold-200 px-1.5 py-0.5 rounded bg-gold-900/40 border border-gold-400/30 transition flex items-center gap-1 flex-shrink-0"
+                            title="Copiar cupón"
+                        >
+                            <i class="fa-regular fa-copy text-[9px]"></i>
+                            <span>Copiar</span>
+                        </button>
+                    </div>
+                ` : `
+                    <div class="text-[10px] text-platinum-500 flex items-center gap-1.5 py-0.5">
+                        <i class="fa-regular fa-clock text-[9px]"></i>
+                        <span>${deal.expiration}</span>
+                    </div>
+                `}
+
+                <!-- Button -->
+                <a 
+                    href="${deal.deal_url}" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="btn-platinum-outline w-full flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 sm:py-2 rounded-lg"
+                >
+                    <span>Ver en ${deal.brand}</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-platinum-400"></i>
+                </a>
+            </div>
+        `;
+
+        foodGrid.appendChild(card);
+    });
+}
+
+function setupFoodEventListeners() {
+    // 1. Food Category Buttons
+    const categoryButtons = document.querySelectorAll(".food-cat-btn");
+    categoryButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const cat = btn.dataset.category;
+            state.foodCategory = cat;
+
+            categoryButtons.forEach(b => {
+                b.className = "food-cat-btn px-3 py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 bg-obsidian-950 border-obsidian-700/80 text-platinum-400 hover:text-gold-200 hover:border-gold-400/30";
+            });
+            btn.className = "food-cat-btn px-3 py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 active-food-cat bg-obsidian-850 border-gold-400/50 text-gold-300 shadow-sm";
+
+            fetchFoodDeals();
+        });
+    });
+
+    // 2. Food Platform Buttons
+    const platformButtons = document.querySelectorAll(".food-platform-btn");
+    platformButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const plat = btn.dataset.platform;
+            state.foodPlatform = plat;
+
+            platformButtons.forEach(b => {
+                b.className = "food-platform-btn px-2.5 py-1 rounded-md border text-xs font-medium transition bg-obsidian-950 border-obsidian-700/70 text-platinum-400 hover:text-gold-300 hover:border-gold-500/40 flex items-center gap-1.5";
+            });
+            btn.className = "food-platform-btn px-2.5 py-1 rounded-md border text-xs font-medium transition active-food-plat bg-obsidian-850 border-gold-400/40 text-gold-300 flex items-center gap-1.5";
+
+            fetchFoodDeals();
+        });
+    });
+
+    // 3. Food Search Input
+    let searchDebounceTimer;
+    if (foodSearchInput) {
+        foodSearchInput.addEventListener("input", () => {
+            const val = foodSearchInput.value.trim();
+            if (foodClearBtn) {
+                if (val.length > 0) foodClearBtn.classList.remove("hidden");
+                else foodClearBtn.classList.add("hidden");
+            }
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                state.foodQuery = val;
+                fetchFoodDeals();
+            }, 300);
+        });
+    }
+
+    if (foodClearBtn) {
+        foodClearBtn.addEventListener("click", () => {
+            if (foodSearchInput) {
+                foodSearchInput.value = "";
+                foodClearBtn.classList.add("hidden");
+                state.foodQuery = "";
+                fetchFoodDeals();
+                foodSearchInput.focus();
+            }
+        });
+    }
+
+    // 4. Food Sort Select
+    if (foodSortSelect) {
+        foodSortSelect.addEventListener("change", (e) => {
+            state.foodSort = e.target.value;
+            fetchFoodDeals();
+        });
+    }
+}
+
+// Global helper for coupon copying
+window.copyCouponToClipboard = function(code, btn) {
+    if (!code) return;
+    const originalHtml = btn.innerHTML;
+
+    const onSuccess = () => {
+        btn.innerHTML = `<i class="fa-solid fa-check text-emerald-400 text-[10px]"></i> <span class="text-emerald-400 font-bold">¡Copiado!</span>`;
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+        }, 2000);
+    };
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(code).then(onSuccess).catch(() => {
+            fallbackCopy(code, onSuccess);
+        });
+    } else {
+        fallbackCopy(code, onSuccess);
+    }
+};
+
+function fallbackCopy(text, cb) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        if (cb) cb();
+    } catch (err) {
+        console.error('Fallback copy error:', err);
+    }
+    document.body.removeChild(textArea);
+}
+

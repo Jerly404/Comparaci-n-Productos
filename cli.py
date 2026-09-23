@@ -8,8 +8,74 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from scrapers.manager import SearchManager
 from scrapers.events_data import get_events
+from scrapers.food_deals import search_food_deals
 
 console = Console()
+
+def show_food_cli(category: str = None, query: str = None, sort_by: str = "asc"):
+    clean_cat = category.lower() if category and category.lower() != "todas" else None
+    data = search_food_deals(category=clean_cat, query=query, sort_by=sort_by)
+    results = data.get("results", [])
+    stats = data.get("stats", {})
+
+    console.print()
+    cat_title = f" - Categoría: {category.capitalize()}" if clean_cat else ""
+    console.print(Panel.fit(
+        f"[bold #dfc38a]ÁREA COMIDAS & YAPE PROMOS PERÚ[/bold #dfc38a]{cat_title}\n"
+        f"[dim #cbd5e1]Promociones verificadas ordenadas estrictamente de menor a mayor precio[/dim #cbd5e1]",
+        border_style="#8c734b"
+    ))
+
+    if not results:
+        console.print("[red]No se encontraron promociones para los filtros seleccionados.[/red]\n")
+        return
+
+    table = Table(border_style="#334155", box=None)
+    table.add_column("#", justify="right", style="dim #64748b", no_wrap=True)
+    table.add_column("Precio (PEN)", justify="right", style="bold #dfc38a", no_wrap=True)
+    table.add_column("Dscto", justify="center", style="#dfc38a", no_wrap=True)
+    table.add_column("Canal / App", style="#cbd5e1", no_wrap=True)
+    table.add_column("Marca", style="bold #f8fafc", no_wrap=True)
+    table.add_column("Combo / Promoción", style="#f8fafc")
+    table.add_column("Cupón", justify="center", style="bold #dfc38a", no_wrap=True)
+    table.add_column("Vigencia", style="dim #94a3b8")
+
+    for i, item in enumerate(results, 1):
+        price_str = f"S/ {item['price']:,.2f}"
+        discount_str = f"-{item['discount_percent']}%" if item.get("discount_percent") else "-"
+        coupon_str = item["coupon_code"] if item.get("coupon_code") else "-"
+        
+        is_yape = "Yape" in item["platform"]
+        plat_styled = f"[bold #a855f7]{item['platform']}[/bold #a855f7]" if is_yape else f"[#cbd5e1]{item['platform']}[/#cbd5e1]"
+
+        if i == 1:
+            table.add_row(
+                f"[bold #dfc38a]1 (Más Bajo)[/bold #dfc38a]",
+                f"[bold #dfc38a]{price_str}[/bold #dfc38a]",
+                f"[bold #dfc38a]{discount_str}[/bold #dfc38a]",
+                plat_styled,
+                f"[bold #f8fafc]{item['brand']}[/bold #f8fafc]",
+                f"[bold #f8fafc]{item['title']}[/bold #f8fafc]",
+                f"[bold #dfc38a]{coupon_str}[/bold #dfc38a]",
+                item["expiration"]
+            )
+        else:
+            table.add_row(
+                str(i),
+                price_str,
+                discount_str,
+                plat_styled,
+                item["brand"],
+                item["title"],
+                coupon_str,
+                item["expiration"]
+            )
+
+    console.print(table)
+    console.print(
+        f"\n[dim #64748b]Total: {stats['total_results']} promociones. "
+        f"Menor: S/ {stats['lowest_price']:,.2f}  •  Promedio: S/ {stats['average_price']:,.2f}  •  Mayor: S/ {stats['highest_price']:,.2f}[/dim #64748b]\n"
+    )
 
 def show_events_cli():
     events = get_events()
@@ -59,6 +125,7 @@ async def run_cli():
         description="BuscaFono CLI - Comparador de precios de celulares y calendario de ofertas en Perú"
     )
     parser.add_argument("query", nargs="?", default=None, type=str, help="Modelo de celular a buscar (ej: 'iPhone 13', 'Samsung S24')")
+    parser.add_argument("--food", nargs="?", const="todas", default=None, help="Ver ofertas de comidas y Yape Promos (ej: --food, --food pizza, --food burger)")
     parser.add_argument("--events", action="store_true", help="Mostrar calendario de Black Friday, Cyber Wow y fechas de ofertas")
     parser.add_argument("--limit", type=int, default=20, help="Límite de resultados a mostrar (default: 20)")
     parser.add_argument("--no-refurbished", action="store_true", help="Excluir celulares reacondicionados")
@@ -67,11 +134,19 @@ async def run_cli():
 
     args = parser.parse_args()
 
-    if args.events or not args.query:
+    if args.food is not None:
+        show_food_cli(category=args.food, query=args.query, sort_by=args.order)
+        return
+
+    if args.events:
         show_events_cli()
-        if not args.query:
-            console.print("[dim #64748b]Para buscar celulares: [white]python cli.py 'modelo'[/white] (ej: python cli.py 'iPhone 13')[/dim #64748b]\n")
-            return
+        return
+
+    if not args.query:
+        show_events_cli()
+        console.print("[dim #64748b]Para buscar celulares: [white]python cli.py 'modelo'[/white] (ej: python cli.py 'iPhone 13')[/dim #64748b]")
+        console.print("[dim #64748b]Para ver comidas & Yape: [white]python cli.py --food[/white] o [white]python cli.py --food pizza[/white][/dim #64748b]\n")
+        return
 
     selected_stores = [s.strip().lower() for s in args.stores.split(",")] if args.stores else None
 

@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from scrapers.manager import SearchManager
 from scrapers.events_data import get_events
+from scrapers.food_deals import search_food_deals
 
 app = FastAPI(
     title="Comparador de Precios de Celulares Perú",
@@ -31,6 +32,16 @@ async def get_stores():
 async def get_discount_events():
     """List major upcoming discount events in Peru (Black Friday, Cyber Wow, Cyber Days)."""
     return get_events()
+
+@app.get("/api/food-deals")
+async def get_food_deals(
+    category: Optional[str] = Query(None, description="Categoría de comida (ej: pizza, burger, pollo, makis, chifa, postres)"),
+    platform: Optional[str] = Query(None, description="Plataforma (ej: Yape Promos, App Oficial, Cuponera / Delivery)"),
+    q: Optional[str] = Query(None, description="Búsqueda por texto (ej: pizza, bembos, kfc, combos)"),
+    sort: str = Query("asc", description="Criterio de ordenación: 'asc' (menor a mayor precio), 'desc', 'discount'")
+):
+    """List real Peruvian food deals and Yape promos sorted strictly lowest-to-highest price."""
+    return search_food_deals(category=category, platform=platform, query=q, sort_by=sort)
 
 @app.get("/api/search")
 async def search_phones(

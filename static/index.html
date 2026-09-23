@@ -67,8 +67,14 @@
             <div class="flex items-center gap-1 sm:gap-1.5 bg-obsidian-900 border border-obsidian-700/80 p-0.5 sm:p-1 rounded-xl text-xs font-medium">
                 <button type="button" id="tab-comparator" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition text-gold-300 bg-obsidian-850 border border-gold-400/30 font-semibold shadow-sm flex items-center gap-1.5 whitespace-nowrap">
                     <i class="fa-solid fa-mobile-screen-button text-[11px]"></i>
-                    <span class="hidden sm:inline">Comparador</span>
-                    <span class="sm:hidden">Buscar</span>
+                    <span class="hidden sm:inline">Celulares</span>
+                    <span class="sm:hidden">Equipos</span>
+                </button>
+                <button type="button" id="tab-food" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition text-platinum-400 hover:text-gold-200 hover:bg-obsidian-850 flex items-center gap-1.5 whitespace-nowrap">
+                    <i class="fa-solid fa-utensils text-[11px] text-gold-400"></i>
+                    <span class="hidden md:inline">Comidas &amp; Yape</span>
+                    <span class="md:hidden">Comidas</span>
+                    <span class="text-[9px] bg-purple-950/80 text-purple-300 border border-purple-500/40 px-1.5 py-0.2 rounded-full font-bold">Promo</span>
                 </button>
                 <button type="button" id="tab-events" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition text-platinum-400 hover:text-gold-200 hover:bg-obsidian-850 flex items-center gap-1.5 whitespace-nowrap">
                     <i class="fa-solid fa-calendar-star text-[11px] text-gold-400"></i>
@@ -292,7 +298,187 @@
             </section>
         </div>
 
-        <!-- ================= VIEW 2: CALENDARIO DE OFERTAS & BLACK FRIDAY ================= -->
+        <!-- ================= VIEW 2: COMIDAS & YAPE PROMOS ================= -->
+        <div id="food-view" class="hidden space-y-6 sm:space-y-7">
+            <!-- Header Section -->
+            <section class="max-w-3xl 2xl:max-w-4xl mx-auto text-center space-y-3 pt-1 sm:pt-3">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-950/70 border border-purple-500/40 text-xs font-semibold text-purple-300 uppercase tracking-wider">
+                    <i class="fa-solid fa-utensils text-[11px] text-purple-400"></i>
+                    <span>Área Comidas &amp; Promos Yape Perú</span>
+                </div>
+                <h1 class="text-xl sm:text-3xl lg:text-4xl 2xl:text-5xl font-semibold tracking-tight text-white leading-tight">
+                    Combos y antojos al <span class="gold-gradient-text font-bold">menor precio garantizado</span>
+                </h1>
+                <p class="text-platinum-500 text-xs sm:text-sm max-w-xl 2xl:max-w-2xl mx-auto leading-relaxed px-2">
+                    Filtra por categorías (pizzas, hamburguesas, pollo, makis, chifa, postres) y descubre promociones verificadas en Yape, apps oficiales y cuponeras ordenadas de menor a mayor precio.
+                </p>
+
+                <!-- Food Search Input -->
+                <div class="mt-4 sm:mt-5 max-w-2xl mx-auto">
+                    <div class="relative flex items-center bg-obsidian-900 border border-obsidian-700 hover:border-gold-400/40 focus-within:border-gold-400 focus-within:ring-1 focus-within:ring-gold-400/20 rounded-xl transition-all shadow-xl">
+                        <div class="pl-3 sm:pl-4 text-gold-400/60 text-sm flex-shrink-0">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="food-search-input" 
+                            placeholder="Buscar en comidas (ej: Pizza mediana, Bembos, KFC, Maki, Chaufa...)"
+                            class="w-full bg-transparent px-2.5 sm:px-3.5 py-3 sm:py-3.5 text-platinum-100 placeholder-platinum-600 focus:outline-none text-xs sm:text-sm font-normal min-w-0"
+                            autocomplete="off"
+                        />
+                        <button 
+                            type="button" 
+                            id="food-clear-btn" 
+                            class="hidden text-platinum-500 hover:text-platinum-300 px-2 sm:px-3 py-2 text-sm transition flex-shrink-0"
+                            title="Limpiar"
+                        >
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Food Category Pills -->
+                <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 pt-2 text-xs">
+                    <button type="button" class="food-cat-btn px-3 py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 active-food-cat bg-obsidian-850 border-gold-400/50 text-gold-300 shadow-sm" data-category="todas">
+                        <i class="fa-solid fa-border-all text-[11px]"></i>
+                        <span>Todas</span>
+                        <span id="cat-count-todas" class="text-[10px] bg-obsidian-950 px-1.5 py-0.2 rounded-full text-platinum-400">--</span>
+                    </button>
+                    <button type="button" class="food-cat-btn px-3 py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 bg-obsidian-950 border-obsidian-700/80 text-platinum-400 hover:text-gold-200 hover:border-gold-400/30" data-category="pizza">
+                        <i class="fa-solid fa-pizza-slice text-[11px] text-amber-400"></i>
+                        <span>Pizzas</span>
+                        <span id="cat-count-pizza" class="text-[10px] bg-obsidian-900 px-1.5 py-0.2 rounded-full text-platinum-400">--</span>
+                    </button>
+                    <button type="button" class="food-cat-btn px-3 py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 bg-obsidian-950 border-obsidian-700/80 text-platinum-400 hover:text-gold-200 hover:border-gold-400/30" data-category="burger">
+                        <i class="fa-solid fa-burger text-[11px] text-amber-500"></i>
+                        <span>Hamburguesas</span>
+                        <span id="cat-count-burger" class="text-[10px] bg-obsidian-900 px-1.5 py-0.2 rounded-full text-platinum-400">--</span>
+                    </button>
+                    <button type="button" class="food-cat-btn px-3 py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 bg-obsidian-950 border-obsidian-700/80 text-platinum-400 hover:text-gold-200 hover:border-gold-400/30" data-category="pollo">
+                        <i class="fa-solid fa-drumstick-bite text-[11px] text-orange-400"></i>
+                        <span>Pollo a la Brasa</span>
+                        <span id="cat-count-pollo" class="text-[10px] bg-obsidian-900 px-1.5 py-0.2 rounded-full text-platinum-400">--</span>
+                    </button>
+                    <button type="button" class="food-cat-btn px-3 py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 bg-obsidian-950 border-obsidian-700/80 text-platinum-400 hover:text-gold-200 hover:border-gold-400/30" data-category="makis">
+                        <i class="fa-solid fa-fish-fins text-[11px] text-sky-400"></i>
+                        <span>Makis &amp; Sushi</span>
+                        <span id="cat-count-makis" class="text-[10px] bg-obsidian-900 px-1.5 py-0.2 rounded-full text-platinum-400">--</span>
+                    </button>
+                    <button type="button" class="food-cat-btn px-3 py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 bg-obsidian-950 border-obsidian-700/80 text-platinum-400 hover:text-gold-200 hover:border-gold-400/30" data-category="chifa">
+                        <i class="fa-solid fa-bowl-rice text-[11px] text-red-400"></i>
+                        <span>Chifa</span>
+                        <span id="cat-count-chifa" class="text-[10px] bg-obsidian-900 px-1.5 py-0.2 rounded-full text-platinum-400">--</span>
+                    </button>
+                    <button type="button" class="food-cat-btn px-3 py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 bg-obsidian-950 border-obsidian-700/80 text-platinum-400 hover:text-gold-200 hover:border-gold-400/30" data-category="postres">
+                        <i class="fa-solid fa-mug-hot text-[11px] text-yellow-300"></i>
+                        <span>Postres &amp; Café</span>
+                        <span id="cat-count-postres" class="text-[10px] bg-obsidian-900 px-1.5 py-0.2 rounded-full text-platinum-400">--</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Food Filters & Sorting Bar -->
+            <section class="bg-obsidian-900 border border-obsidian-700/70 rounded-xl p-3 sm:p-4 space-y-3 shadow-lg">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                    <!-- Source/Platform Pills -->
+                    <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                        <span class="text-platinum-500 font-medium whitespace-nowrap">Canal / App:</span>
+                        <button type="button" class="food-platform-btn px-2.5 py-1 rounded-md border text-xs font-medium transition active-food-plat bg-obsidian-850 border-gold-400/40 text-gold-300" data-platform="todas">
+                            Todos
+                        </button>
+                        <button type="button" class="food-platform-btn px-2.5 py-1 rounded-md border text-xs font-medium transition bg-obsidian-950 border-obsidian-700/70 text-platinum-400 hover:text-purple-300 hover:border-purple-500/40 flex items-center gap-1.5" data-platform="Yape Promos">
+                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                            <span>Yape Promos</span>
+                        </button>
+                        <button type="button" class="food-platform-btn px-2.5 py-1 rounded-md border text-xs font-medium transition bg-obsidian-950 border-obsidian-700/70 text-platinum-400 hover:text-blue-300 hover:border-blue-500/40 flex items-center gap-1.5" data-platform="App Oficial">
+                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                            <span>App Oficial</span>
+                        </button>
+                        <button type="button" class="food-platform-btn px-2.5 py-1 rounded-md border text-xs font-medium transition bg-obsidian-950 border-obsidian-700/70 text-platinum-400 hover:text-gold-300 hover:border-gold-500/40 flex items-center gap-1.5" data-platform="Cuponera">
+                            <span class="w-1.5 h-1.5 rounded-full bg-gold-400"></span>
+                            <span>Cuponera / Delivery</span>
+                        </button>
+                    </div>
+
+                    <!-- Sort Selector -->
+                    <div class="flex items-center gap-2 sm:gap-2.5">
+                        <span class="text-platinum-500 font-medium whitespace-nowrap">Ordenar:</span>
+                        <select id="food-sort-select" class="w-full sm:w-auto bg-obsidian-950 border border-obsidian-700 text-platinum-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-gold-400 font-medium">
+                            <option value="asc" selected>Menor a mayor precio (Recomendado)</option>
+                            <option value="desc">Mayor a menor precio</option>
+                            <option value="discount">Mayor descuento (%)</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Food Results Section -->
+            <div id="food-results-container" class="space-y-6">
+                <!-- Food Spotlight (Best Deal) & Stats Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+                    <!-- Food Spotlight Card -->
+                    <div id="food-spotlight-container" class="lg:col-span-2 2xl:col-span-3">
+                        <!-- Populated via JS -->
+                    </div>
+
+                    <!-- Food Stats Box -->
+                    <div class="bg-obsidian-900 border border-obsidian-700/70 rounded-xl p-3.5 sm:p-4 flex flex-col justify-between space-y-3.5 shadow-lg">
+                        <div class="flex items-center justify-between border-b border-obsidian-700/50 pb-2.5">
+                            <span class="text-xs font-medium uppercase tracking-wider text-platinum-500">Resumen de Promos</span>
+                            <span class="text-xs text-gold-400/90 font-medium flex items-center gap-1">
+                                <i class="fa-solid fa-badge-percent"></i> Cupones Activos
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2.5 sm:gap-3">
+                            <div class="bg-obsidian-950 border border-obsidian-700/60 rounded-lg p-2.5 sm:p-3">
+                                <span class="text-[9px] sm:text-[10px] uppercase tracking-wider text-platinum-500 block">Menor precio</span>
+                                <span id="food-stat-lowest" class="text-sm sm:text-base font-bold text-gold-300 truncate block">S/ 0.00</span>
+                            </div>
+                            <div class="bg-obsidian-950 border border-obsidian-700/60 rounded-lg p-2.5 sm:p-3">
+                                <span class="text-[9px] sm:text-[10px] uppercase tracking-wider text-platinum-500 block">Precio Promedio</span>
+                                <span id="food-stat-avg" class="text-sm sm:text-base font-bold text-platinum-200 truncate block">S/ 0.00</span>
+                            </div>
+                            <div class="bg-obsidian-950 border border-obsidian-700/60 rounded-lg p-2.5 sm:p-3">
+                                <span class="text-[9px] sm:text-[10px] uppercase tracking-wider text-platinum-500 block">Mayor precio</span>
+                                <span id="food-stat-highest" class="text-sm sm:text-base font-bold text-platinum-400 truncate block">S/ 0.00</span>
+                            </div>
+                            <div class="bg-obsidian-950 border border-obsidian-700/60 rounded-lg p-2.5 sm:p-3">
+                                <span class="text-[9px] sm:text-[10px] uppercase tracking-wider text-platinum-500 block">Combos listados</span>
+                                <span id="food-stat-total" class="text-sm sm:text-base font-bold text-platinum-100 truncate block">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Food Deals Grid Section -->
+                <div class="space-y-3 pt-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-sm sm:text-base font-semibold text-platinum-100" id="food-grid-title">Ofertas de comida ordenadas de menor a mayor</h2>
+                            <span id="food-count-badge" class="text-[11px] sm:text-xs text-gold-300/90 bg-obsidian-900 border border-gold-400/20 px-2 py-0.5 rounded-full font-medium">0 combos</span>
+                        </div>
+                    </div>
+
+                    <!-- Grid of food cards -->
+                    <div id="food-grid" class="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-3.5 sm:gap-4">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Food Empty State -->
+            <section id="food-empty-state" class="hidden py-16 text-center space-y-3 max-w-sm mx-auto">
+                <div class="w-10 h-10 rounded-full bg-obsidian-900 border border-obsidian-700 flex items-center justify-center mx-auto text-platinum-500 text-sm">
+                    <i class="fa-solid fa-utensils"></i>
+                </div>
+                <p class="text-sm font-semibold text-platinum-200">No se encontraron promociones</p>
+                <p class="text-xs text-platinum-500">
+                    Prueba cambiando la categoría o buscando términos como "Pizza", "Bembos", "KFC" o "Chaufa".
+                </p>
+            </section>
+        </div>
+
+        <!-- ================= VIEW 3: CALENDARIO DE OFERTAS & BLACK FRIDAY ================= -->
         <div id="events-view" class="hidden space-y-8">
             <!-- Events Section Header -->
             <div class="max-w-3xl mx-auto text-center space-y-3 pt-2">
