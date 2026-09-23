@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BuscaFono | Comparador de Precios de Celulares</title>
+    <title>BuscaPrecios Perú | Comparador de Productos, Ropa y Ofertas</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -98,7 +98,7 @@
                 </button>
                 <div class="hidden xl:flex items-center gap-1.5 text-[11px] text-platinum-500 font-medium">
                     <span class="w-2 h-2 rounded-full bg-gold-400 shadow-sm shadow-gold-400/50"></span>
-                    <span class="text-platinum-400">12 tiendas</span>
+                    <span id="stores-counter-badge" class="text-platinum-400">14 tiendas conectadas</span>
                 </div>
             </div>
         </div>
@@ -128,7 +128,7 @@
                     El producto que buscas al <span class="gold-gradient-text font-bold">menor precio del mercado</span>
                 </h1>
                 <p class="text-platinum-500 text-xs sm:text-sm max-w-xl 2xl:max-w-2xl mx-auto leading-relaxed px-2">
-                    Comparamos en tiempo real celulares, laptops, televisores, consolas y miles de productos en Falabella, Ripley, Claro, Entel, PlazaVea, Coolbox, Promart, Oechsle, Hiraoka y más.
+                    Comparamos en tiempo real celulares, ropa y moda (<strong class="text-platinum-300">H&M, Ralph Lauren, Topitop</strong>), laptops, televisores y miles de productos en Falabella, Ripley, PlazaVea, Oechsle y las mejores tiendas del Perú.
                 </p>
 
                 <!-- Search Form -->
@@ -140,7 +140,7 @@
                         <input 
                             type="text" 
                             id="search-input" 
-                            placeholder="Ingresa producto (ej: iPhone 15, Laptop Lenovo, Smart TV 55, PS5 Slim, S24 FE...)"
+                            placeholder="Busca cualquier producto o ropa (ej: Polo Ralph Lauren, Casaca H&M, iPhone 15, S24 FE, Jeans, Zapatillas...)"
                             class="w-full bg-transparent px-2.5 sm:px-3.5 py-3 sm:py-3.5 text-platinum-100 placeholder-platinum-600 focus:outline-none text-xs sm:text-base font-normal min-w-0"
                             autocomplete="off"
                             required
@@ -166,14 +166,23 @@
                     </div>
                 </form>
 
-                <!-- Quick Suggestions -->
+                <!-- Quick Suggestions (Fashion & Tech) -->
                 <div class="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 pt-1 text-xs">
                     <span class="text-platinum-600 mr-0.5 sm:mr-1 text-[10px] sm:text-[11px] uppercase tracking-wider">Tendencias:</span>
+                    <button type="button" class="quick-chip text-platinum-300 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-gold-400/30 hover:border-gold-400/60 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs flex items-center gap-1 font-medium" data-query="Polo Ralph Lauren">
+                        <i class="fa-solid fa-shirt text-gold-400 text-[10px]"></i>
+                        <span>Polo Ralph Lauren</span>
+                    </button>
+                    <button type="button" class="quick-chip text-platinum-300 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-rose-500/30 hover:border-rose-400 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs flex items-center gap-1 font-medium" data-query="H&M">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#e11d48]"></span>
+                        <span>H&M Moda</span>
+                    </button>
+                    <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="Casacas">Casacas</button>
+                    <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="Topitop">Topitop</button>
                     <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="Samsung Galaxy S24 FE">S24 FE</button>
-                    <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="Laptop Gamer">Laptop Gamer</button>
-                    <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="Smart TV 55">Smart TV 55"</button>
-                    <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="PlayStation 5 Slim">PS5 Slim</button>
                     <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="iPhone 15">iPhone 15</button>
+                    <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="Jeans">Jeans</button>
+                    <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="Laptop Gamer">Laptop Gamer</button>
                 </div>
             </section>
 

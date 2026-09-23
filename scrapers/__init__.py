@@ -11,6 +11,8 @@ from .entel import EntelScraper
 from .lacuracao import LaCuracaoScraper
 from .efe import TiendasEfeScraper
 from .shopstar import ShopstarScraper
+from .hm import HMScraper
+from .topitop import TopitopScraper
 from .filter_utils import is_valid_phone_item, is_phone_accessory, matches_query_keywords
 
 __all__ = [
@@ -18,6 +20,8 @@ __all__ = [
     "BaseScraper",
     "FalabellaScraper",
     "RipleyScraper",
+    "HMScraper",
+    "TopitopScraper",
     "PlazaVeaScraper",
     "CoolboxScraper",
     "OechsleScraper",

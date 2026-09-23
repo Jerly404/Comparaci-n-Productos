@@ -55,8 +55,24 @@ class VTEXBaseScraper(BaseScraper):
                 if not items_sub:
                     continue
 
-                first_sub = items_sub[0]
-                sellers = first_sub.get("sellers") or []
+                # Find first in-stock SKU or default to first valid SKU
+                chosen_sub = None
+                for sub in items_sub:
+                    sellers = sub.get("sellers") or []
+                    if sellers and sellers[0].get("commertialOffer", {}).get("Price", 0) > 0:
+                        if sellers[0].get("commertialOffer", {}).get("AvailableQuantity", 0) > 0:
+                            chosen_sub = sub
+                            break
+                if not chosen_sub:
+                    for sub in items_sub:
+                        sellers = sub.get("sellers") or []
+                        if sellers and sellers[0].get("commertialOffer", {}).get("Price", 0) > 0:
+                            chosen_sub = sub
+                            break
+                if not chosen_sub:
+                    chosen_sub = items_sub[0]
+
+                sellers = chosen_sub.get("sellers") or []
                 if not sellers:
                     continue
 
@@ -74,11 +90,19 @@ class VTEXBaseScraper(BaseScraper):
                     original_price = float(list_price)
                     discount_percent = round((1 - (price / original_price)) * 100)
 
-                images = first_sub.get("images") or []
+                images = chosen_sub.get("images") or []
                 image_url = images[0].get("imageUrl", "") if images else ""
 
+                # Complement name if present (e.g. Color or variation for clothing)
+                complement = chosen_sub.get("complementName")
+                if complement and complement.lower() not in title.lower() and len(complement) < 30:
+                    title = f"{title} ({complement})"
+
+                if prod_url and not prod_url.startswith("http"):
+                    prod_url = f"{self.base_url}{prod_url}"
+
                 cond = detect_condition(title)
-                item_id = prod_id or first_sub.get("itemId") or f"{self.store_id}-{len(items)+1}"
+                item_id = prod_id or chosen_sub.get("itemId") or f"{self.store_id}-{len(items)+1}"
 
                 items.append(ProductItem(
                     id=f"{self.store_id}-{item_id}",

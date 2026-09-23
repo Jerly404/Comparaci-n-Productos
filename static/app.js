@@ -166,6 +166,10 @@ async function fetchStores() {
             state.stores = await resp.json();
             state.stores.forEach(s => state.selectedStores.add(s.id));
             renderStoreToggles();
+            const counterBadge = document.getElementById("stores-counter-badge");
+            if (counterBadge && state.stores.length > 0) {
+                counterBadge.textContent = `${state.stores.length} tiendas conectadas`;
+            }
         }
     } catch (e) {
         console.error("Error loading stores:", e);
@@ -627,14 +631,14 @@ function renderResults() {
                     <i class="${isFav ? 'fa-solid text-rose-500' : 'fa-regular text-platinum-400 hover:text-rose-400'} fa-heart"></i>
                 </button>
 
-                <div class="w-24 h-24 xs:w-28 xs:h-28 sm:w-36 sm:h-36 flex-shrink-0 bg-obsidian-950 rounded-lg p-2.5 border border-obsidian-700/80 flex items-center justify-center">
+                <a href="${cheapest.url}" target="_blank" rel="noopener noreferrer" class="w-24 h-24 xs:w-28 xs:h-28 sm:w-36 sm:h-36 flex-shrink-0 bg-obsidian-950 rounded-lg p-2.5 border border-obsidian-700/80 flex items-center justify-center group cursor-pointer block" title="Abrir en ${cheapest.store}">
                     <img 
                         src="${cheapest.image_url || DEFAULT_IMAGE_FALLBACK}" 
                         alt="${escapeHtml(cheapest.title)}"
-                        class="max-w-full max-h-full object-contain"
+                        class="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-105"
                         onerror="this.src='${DEFAULT_IMAGE_FALLBACK}'"
                     />
-                </div>
+                </a>
 
                 <div class="flex-1 space-y-2 text-center sm:text-left flex flex-col justify-between w-full">
                     <div>
@@ -656,9 +660,11 @@ function renderResults() {
                             ` : ''}
                         </div>
 
-                        <h2 class="text-sm sm:text-base lg:text-lg font-semibold text-white leading-snug mt-1.5">
-                            ${escapeHtml(cheapest.title)}
-                        </h2>
+                        <a href="${cheapest.url}" target="_blank" rel="noopener noreferrer" class="group block mt-1.5">
+                            <h2 class="text-sm sm:text-base lg:text-lg font-semibold text-white group-hover:text-gold-300 transition leading-snug">
+                                ${escapeHtml(cheapest.title)}
+                            </h2>
+                        </a>
 
                         <div class="flex flex-wrap items-baseline justify-center sm:justify-start gap-2 pt-1">
                             <span class="text-xl sm:text-2xl font-bold text-gold-300">
@@ -772,14 +778,19 @@ function renderResults() {
                     </div>
                 </div>
 
-                <!-- Product Thumbnail + Deal Radar Badge Overlay -->
-                <div class="w-full h-32 xs:h-36 sm:h-40 bg-obsidian-950 rounded-lg p-2 sm:p-2.5 mb-2.5 sm:mb-3 flex items-center justify-center overflow-hidden border border-obsidian-700/50 relative">
+                <!-- Product Thumbnail (Clickable directly to store product) -->
+                <a href="${prod.url}" target="_blank" rel="noopener noreferrer" class="block w-full h-32 xs:h-36 sm:h-40 bg-obsidian-950 rounded-lg p-2 sm:p-2.5 mb-2.5 sm:mb-3 flex items-center justify-center overflow-hidden border border-obsidian-700/50 relative group cursor-pointer" title="Ver ${escapeHtml(prod.title)} en ${prod.store}">
                     <img 
                         src="${prod.image_url || DEFAULT_IMAGE_FALLBACK}" 
                         alt="${escapeHtml(prod.title)}"
-                        class="max-w-full max-h-full object-contain"
+                        class="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-105"
                         onerror="this.src='${DEFAULT_IMAGE_FALLBACK}'"
                     />
+                    <div class="absolute inset-0 bg-gold-400/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span class="bg-obsidian-950/90 border border-gold-400/50 text-gold-300 text-[10px] font-semibold px-2 py-1 rounded shadow-lg flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i> Ver en ${prod.store}
+                        </span>
+                    </div>
                     ${prod.deal_verdict === "Mínimo Histórico" ? `
                         <div class="absolute bottom-1.5 left-1.5 bg-amber-950/90 border border-amber-500/50 text-amber-300 text-[9px] font-bold px-1.5 py-0.2 rounded flex items-center gap-1 shadow">
                             <i class="fa-solid fa-fire text-amber-400"></i> Mínimo Histórico
@@ -789,16 +800,18 @@ function renderResults() {
                             <i class="fa-solid fa-check text-emerald-400"></i> Buen Precio
                         </div>
                     ` : '')}
-                </div>
+                </a>
 
-                <!-- Title & Brand -->
+                <!-- Title & Brand (Clickable directly to store product) -->
                 <div class="space-y-1">
                     <span class="text-[9px] sm:text-[10px] text-platinum-500 font-medium uppercase tracking-wider block">
                         ${prod.brand || 'Producto'}
                     </span>
-                    <h3 class="text-xs font-medium text-platinum-200 line-clamp-2 leading-snug sm:leading-relaxed" title="${escapeHtml(prod.title)}">
-                        ${escapeHtml(prod.title)}
-                    </h3>
+                    <a href="${prod.url}" target="_blank" rel="noopener noreferrer" class="block group">
+                        <h3 class="text-xs font-medium text-platinum-200 group-hover:text-gold-300 transition line-clamp-2 leading-snug sm:leading-relaxed" title="${escapeHtml(prod.title)}">
+                            ${escapeHtml(prod.title)}
+                        </h3>
+                    </a>
                 </div>
 
                 <!-- Logistics & Payment Highlights -->

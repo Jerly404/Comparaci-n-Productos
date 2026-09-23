@@ -14,11 +14,15 @@ from .entel import EntelScraper
 from .lacuracao import LaCuracaoScraper
 from .efe import TiendasEfeScraper
 from .shopstar import ShopstarScraper
+from .hm import HMScraper
+from .topitop import TopitopScraper
 from .filter_utils import is_valid_phone_item
 
 ALL_SCRAPERS: Dict[str, BaseScraper] = {
     "falabella": FalabellaScraper(),
     "ripley": RipleyScraper(),
+    "hm": HMScraper(),
+    "topitop": TopitopScraper(),
     "plazavea": PlazaVeaScraper(),
     "coolbox": CoolboxScraper(),
     "oechsle": OechsleScraper(),
@@ -34,12 +38,12 @@ ALL_SCRAPERS: Dict[str, BaseScraper] = {
 import re
 
 CAJAMARCA_EL_QUINDE_STORES = {"falabella", "ripley", "claro", "entel", "metro"}
-CAJAMARCA_REAL_PLAZA_STORES = {"plazavea", "promart", "oechsle"}
-LIMA_STORE_PRESENCE = {"falabella", "ripley", "plazavea", "oechsle", "promart", "metro", "hiraoka", "coolbox", "claro", "entel", "lacuracao", "efe"}
-AREQUIPA_STORE_PRESENCE = {"falabella", "ripley", "plazavea", "oechsle", "promart", "metro", "claro", "entel", "lacuracao", "efe"}
-TRUJILLO_STORE_PRESENCE = {"falabella", "ripley", "plazavea", "promart", "metro", "claro", "entel", "oechsle", "lacuracao", "efe"}
-CHICLAYO_PIURA_STORE_PRESENCE = {"falabella", "ripley", "plazavea", "promart", "metro", "claro", "entel", "oechsle", "lacuracao", "efe"}
-CUSCO_STORE_PRESENCE = {"falabella", "promart", "plazavea", "claro", "entel", "lacuracao", "efe"}
+CAJAMARCA_REAL_PLAZA_STORES = {"plazavea", "promart", "oechsle", "hm", "topitop"}
+LIMA_STORE_PRESENCE = {"falabella", "ripley", "hm", "topitop", "plazavea", "oechsle", "promart", "metro", "hiraoka", "coolbox", "claro", "entel", "lacuracao", "efe"}
+AREQUIPA_STORE_PRESENCE = {"falabella", "ripley", "hm", "topitop", "plazavea", "oechsle", "promart", "metro", "claro", "entel", "lacuracao", "efe"}
+TRUJILLO_STORE_PRESENCE = {"falabella", "ripley", "hm", "topitop", "plazavea", "promart", "metro", "claro", "entel", "oechsle", "lacuracao", "efe"}
+CHICLAYO_PIURA_STORE_PRESENCE = {"falabella", "ripley", "hm", "topitop", "plazavea", "promart", "metro", "claro", "entel", "oechsle", "lacuracao", "efe"}
+CUSCO_STORE_PRESENCE = {"falabella", "hm", "topitop", "promart", "plazavea", "claro", "entel", "lacuracao", "efe"}
 
 STORE_EXCLUSIVE_CARDS = {
     "falabella": "CMR Falabella",
@@ -49,30 +53,59 @@ STORE_EXCLUSIVE_CARDS = {
     "promart": "Tarjeta Oh!"
 }
 
-def extract_inferred_specs(title: str, condition: str) -> dict:
+def extract_inferred_specs(title: str, condition: str, brand: str = "") -> dict:
     specs = {}
     title_upper = title.upper()
 
-    # Storage
+    # Tech Specs: Storage
     storage_match = re.search(r'\b(64|128|256|512)\s*GB\b|\b(1|2)\s*TB\b', title_upper)
     if storage_match:
         specs["Almacenamiento"] = storage_match.group(0).replace(" ", "")
     
-    # RAM
+    # Tech Specs: RAM
     ram_match = re.search(r'\b(4|6|8|12|16|24|32|64)\s*GB(?:\s*RAM)?\b', title_upper)
     if ram_match and (not storage_match or ram_match.group(0) != storage_match.group(0)):
         specs["Memoria RAM"] = ram_match.group(0).replace(" ", "")
 
-    # Display / Screen size
+    # Tech Specs: Display / Screen size
     screen_match = re.search(r'(\d{1,2}(?:\.\d{1,2})?)\s*(?:["\']|PULGADAS|PULG)', title_upper)
     if screen_match:
         specs["Pantalla"] = f"{screen_match.group(1)}\""
 
-    # Warranty
+    # Fashion Specs: Tipo de Prenda
+    for prenda in ['POLO', 'POLERA', 'CAMISA', 'CASACA', 'PANTALON', 'JEAN', 'CHOMPA', 'ABRIGO', 'VESTIDO', 'FALDA', 'SHORT', 'BLUSA', 'ZAPATILLA', 'ZAPATO', 'PERFUME']:
+        if prenda in title_upper:
+            specs["Tipo de Prenda"] = prenda.capitalize()
+            break
+
+    # Fashion Specs: Corte / Fit
+    for fit in ['REGULAR FIT', 'SLIM FIT', 'OVERSIZED', 'LOOSE FIT', 'SKINNY', 'CLASSIC FIT']:
+        if fit in title_upper:
+            specs["Corte / Fit"] = fit.title()
+            break
+
+    # Fashion Specs: Material
+    for mat in ['ALGODON PIMA', 'ALGODON', 'DENIM', 'LINO', 'CUERO', 'LANA', 'POLIESTER']:
+        if mat in title_upper:
+            specs["Material"] = mat.title()
+            break
+
+    # Fashion Specs: Género
+    if any(g in title_upper for g in ['HOMBRE', 'MASCULINO', 'MEN']):
+        specs["Género"] = "Hombre"
+    elif any(g in title_upper for g in ['MUJER', 'FEMENINO', 'DAMA', 'WOMEN']):
+        specs["Género"] = "Mujer"
+    elif any(g in title_upper for g in ['NIÑO', 'NIÑA', 'KIDS']):
+        specs["Género"] = "Niños"
+
+    if brand:
+        specs["Marca"] = brand
+
+    # Warranty / Condición
     if condition == "Reacondicionado":
         specs["Garantía"] = "6 Meses (Garantía Tienda / Grado A)"
     else:
-        specs["Garantía"] = "12 Meses (Garantía Oficial Perú)"
+        specs["Garantía"] = "Garantía Oficial Perú"
 
     specs["Estado"] = condition
     return specs
@@ -147,7 +180,7 @@ def enrich_product_item(item: ProductItem, avg_price: float = 0.0, location: str
     item.installments_info = f"12 cuotas de S/ {item.installments_12x:,.2f} sin int. (BCP, BBVA, Interbank)"
 
     # 4. Inferred specs for side-by-side comparison
-    item.specs = extract_inferred_specs(item.title, item.condition)
+    item.specs = extract_inferred_specs(item.title, item.condition, brand=item.brand)
 
     # 5. Deal verdict (Semáforo de Oferta)
     discount = item.discount_percent or 0
@@ -231,7 +264,7 @@ class SearchManager:
                 continue
 
             # Validate phone / general product & filter accessories
-            if not is_valid_phone_item(item.title, query, item.price, hide_accessories=hide_accessories):
+            if not is_valid_phone_item(item.title, query, item.price, brand=item.brand, hide_accessories=hide_accessories):
                 continue
 
             valid_items.append(item)
