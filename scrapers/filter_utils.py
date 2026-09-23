@@ -1,0 +1,99 @@
+import re
+from typing import List
+
+# Words indicating accessories/parts or non-phone electronics that should be filtered out
+ACCESSORY_KEYWORDS = [
+    "funda", "case", "carcasa", "cover", "protector", "estuche", "skin",
+    "cargador", "charger", "cable", "adaptador", "adapter", "dock",
+    "mica", "vidrio templado", "tempered glass", "lamina", "lámina", "hidrogel",
+    "soporte", "holder", "tripode", "trípode", "anillo",
+    "audifonos", "audífonos", "auriculares", "earbuds", "airpods", "headset",
+    "bateria externa", "batería externa", "powerbank", "power bank",
+    "repuesto", "pantalla de repuesto", "pantalla lcd", "display", "bateria para", "batería para",
+    "tapa trasera", "flex", "conector", "correa", "lente de camara", "lente para cámara",
+    "monitor", "televisor", "tv", "smart tv", "tablet", "ipad", "laptop", "smartwatch", "reloj inteligente"
+]
+
+def clean_text(text: str) -> str:
+    """Normalize text by lowering, stripping accents and special characters."""
+    text = text.lower()
+    replacements = {
+        'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n'
+    }
+    for orig, rep in replacements.items():
+        text = text.replace(orig, rep)
+    return text
+
+def is_phone_accessory(title: str, query: str) -> bool:
+    """
+    Returns True if the product is an accessory/case/cable/etc.,
+    UNLESS the user specifically asked for that accessory in the query.
+    """
+    norm_title = clean_text(title)
+    norm_query = clean_text(query)
+
+    for word in ACCESSORY_KEYWORDS:
+        clean_word = clean_text(word)
+        if clean_word in norm_title:
+            # If the user explicitly searched for this accessory word, don't filter it out
+            if clean_word in norm_query:
+                continue
+            return True
+    return False
+
+def matches_query_keywords(title: str, query: str) -> bool:
+    """
+    Ensures that key terms from the query are actually present in the title.
+    If the query contains specific model numbers (e.g. '13', '24'), those numbers
+    must be matched so 'Note 13' doesn't return 'Note 11' or 'Note 15'.
+    """
+    norm_title = clean_text(title)
+    norm_query = clean_text(query)
+
+    tokens = [t for t in re.split(r'\s+', norm_query) if len(t) >= 2 and t not in ['de', 'el', 'la', 'con', 'para', 'en']]
+    if not tokens:
+        return True
+
+    # Identify numerical model tokens like '13', '24', '15', '50'
+    numeric_tokens = [t for t in tokens if re.search(r'\d', t)]
+    for num_token in numeric_tokens:
+        # Check boundary match or substring for numbers like '13' or 's24'
+        if not re.search(r'(?:\b|[a-z])' + re.escape(num_token) + r'(?:\b|[a-z])', norm_title):
+            return False
+
+    # Check textual tokens matching
+    text_tokens = [t for t in tokens if not re.search(r'^\d+$', t)]
+    if not text_tokens:
+        return True
+
+    matched_text = 0
+    for token in text_tokens:
+        if token in norm_title:
+            matched_text += 1
+
+    # At least 60% of text tokens must match
+    return (matched_text / len(text_tokens)) >= 0.60
+
+
+def detect_condition(title: str) -> str:
+    """Detects whether product is new, refurbished, or open box."""
+    norm = clean_text(title)
+    if any(k in norm for k in ["reacondicionado", "refurbished", "seminuevo", "semi-nuevo", "open box", "outlet"]):
+        return "Reacondicionado"
+    return "Nuevo"
+
+def is_valid_phone_item(title: str, query: str, price: float, hide_accessories: bool = True, min_price: float = 120.0) -> bool:
+    """Validates if an item is a relevant phone result."""
+    if not title or price <= 0:
+        return False
+
+    if hide_accessories:
+        if is_phone_accessory(title, query):
+            return False
+        # Smartphones rarely cost less than ~S/ 120
+        norm_query = clean_text(query)
+        is_accessory_query = any(clean_text(w) in norm_query for w in ACCESSORY_KEYWORDS)
+        if not is_accessory_query and price < min_price:
+            return False
+
+    return matches_query_keywords(title, query)
