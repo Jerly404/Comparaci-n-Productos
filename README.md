@@ -11,10 +11,15 @@ El sistema realiza búsquedas asíncronas y simultáneas en:
 1. **Falabella Perú** (`falabella.com.pe`)
 2. **Ripley Perú** (`ripley.com.pe`)
 3. **PlazaVea** (`plazavea.com.pe`)
-4. **Coolbox Perú** (`coolbox.pe`)
-5. **Hiraoka** (`hiraoka.com.pe`)
-6. **Oechsle** (`oechsle.pe`)
-7. **Promart** (`promart.pe`)
+4. **Claro Perú** (`tiendaclaro.pe`)
+5. **Entel Perú** (`entel.pe` / `miportal.entel.pe`)
+6. **Coolbox Perú** (`coolbox.pe`)
+7. **Hiraoka** (`hiraoka.com.pe`)
+8. **La Curacao** (`lacuracao.pe`)
+9. **Tiendas EFE** (`efe.com.pe`)
+10. **Oechsle** (`oechsle.pe`)
+11. **Promart** (`promart.pe`)
+12. **Shopstar** (`shopstar.pe`)
 
 ---
 
