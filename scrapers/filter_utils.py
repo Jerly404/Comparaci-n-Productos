@@ -1,22 +1,21 @@
 import re
 from typing import List
 
-# Words indicating accessories/parts or non-phone electronics that should be filtered out
+# Words indicating true device accessories/parts that should be filtered out when hide_accessories is active
 ACCESSORY_KEYWORDS = [
     "funda", "case", "carcasa", "cover", "protector", "estuche", "skin",
     "cargador", "charger", "cable", "adaptador", "adapter", "dock",
     "mica", "vidrio templado", "tempered glass", "lamina", "lámina", "hidrogel",
     "soporte", "holder", "tripode", "trípode", "anillo",
-    "audifonos", "audífonos", "auriculares", "earbuds", "airpods", "headset",
     "bateria externa", "batería externa", "powerbank", "power bank",
     "repuesto", "pantalla de repuesto", "pantalla lcd", "display", "bateria para", "batería para",
-    "tapa trasera", "flex", "conector", "correa", "lente de camara", "lente para cámara",
-    "monitor", "televisor", "tv", "smart tv", "tablet", "ipad", "laptop", "smartwatch", "reloj inteligente"
+    "tapa trasera", "flex", "conector", "correa para reloj", "lente de camara", "lente para cámara",
+    "mochila", "backpack", "maletin", "maletín", "bolso para", "funda para"
 ]
 
 GENERIC_STOP_WORDS = {
     'de', 'el', 'la', 'con', 'para', 'en', 'los', 'las', 'un', 'una',
-    'celular', 'smartphone', 'telefono', 'teléfono', 'movil', 'móvil', 'equipo', 'nuevo', 'original'
+    'nuevo', 'original', 'producto', 'tienda'
 }
 
 def clean_text(text: str) -> str:

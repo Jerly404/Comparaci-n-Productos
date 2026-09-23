@@ -55,10 +55,10 @@
         <div class="max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1850px] mx-auto px-3 sm:px-6 lg:px-8 2xl:px-12 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
             <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                 <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-obsidian-850 border border-gold-400/30 flex items-center justify-center text-gold-300 shadow-inner">
-                    <i class="fa-solid fa-mobile-screen-button text-[11px] sm:text-xs"></i>
+                    <i class="fa-solid fa-boxes-stacked text-[11px] sm:text-xs"></i>
                 </div>
                 <div class="flex items-center gap-1.5 sm:gap-2.5">
-                    <span class="luxury-brand-font font-bold text-sm sm:text-base tracking-wider text-platinum-100">BUSCAFONO</span>
+                    <span class="luxury-brand-font font-bold text-sm sm:text-base tracking-wider text-platinum-100">BUSCAPRODUCTOS</span>
                     <span class="text-[9px] sm:text-[10px] text-gold-400/80 border-l border-obsidian-700 pl-1.5 sm:pl-2.5 font-medium uppercase tracking-widest hidden xs:inline">Perú</span>
                 </div>
             </div>
@@ -66,13 +66,13 @@
             <!-- Navigation View Switcher Tabs -->
             <div class="flex items-center gap-1 sm:gap-1.5 bg-obsidian-900 border border-obsidian-700/80 p-0.5 sm:p-1 rounded-xl text-xs font-medium">
                 <button type="button" id="tab-comparator" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition text-gold-300 bg-obsidian-850 border border-gold-400/30 font-semibold shadow-sm flex items-center gap-1.5 whitespace-nowrap">
-                    <i class="fa-solid fa-mobile-screen-button text-[11px]"></i>
-                    <span class="hidden sm:inline">Celulares</span>
-                    <span class="sm:hidden">Equipos</span>
+                    <i class="fa-solid fa-boxes-stacked text-[11px]"></i>
+                    <span class="hidden sm:inline">Productos</span>
+                    <span class="sm:hidden">Productos</span>
                 </button>
                 <button type="button" id="tab-food" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition text-platinum-400 hover:text-gold-200 hover:bg-obsidian-850 flex items-center gap-1.5 whitespace-nowrap">
                     <i class="fa-solid fa-utensils text-[11px] text-gold-400"></i>
-                    <span class="hidden md:inline">Comidas &amp; Yape</span>
+                    <span class="hidden md:inline">Comidas, Rappi &amp; Yape</span>
                     <span class="md:hidden">Comidas</span>
                     <span class="text-[9px] bg-purple-950/80 text-purple-300 border border-purple-500/40 px-1.5 py-0.2 rounded-full font-bold">Promo</span>
                 </button>
@@ -97,7 +97,7 @@
     <!-- Main Content -->
     <main class="flex-1 max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1850px] w-full mx-auto px-3 sm:px-6 lg:px-8 2xl:px-12 py-5 sm:py-8">
 
-        <!-- ================= VIEW 1: COMPARADOR ================= -->
+        <!-- ================= VIEW 1: COMPARADOR DE PRODUCTOS ================= -->
         <div id="comparator-view" class="space-y-6 sm:space-y-7">
             <!-- Hero Section -->
             <section class="max-w-3xl 2xl:max-w-4xl mx-auto text-center space-y-3 pt-1 sm:pt-3">
@@ -113,10 +113,10 @@
                 </div>
 
                 <h1 class="text-xl sm:text-3xl lg:text-4xl 2xl:text-5xl font-semibold tracking-tight text-white leading-tight">
-                    El celular que buscas al <span class="gold-gradient-text font-bold">menor precio del mercado</span>
+                    El producto que buscas al <span class="gold-gradient-text font-bold">menor precio del mercado</span>
                 </h1>
                 <p class="text-platinum-500 text-xs sm:text-sm max-w-xl 2xl:max-w-2xl mx-auto leading-relaxed px-2">
-                    Comparamos en tiempo real los catálogos oficiales de Falabella, Ripley, Claro, Entel, PlazaVea, Coolbox, Hiraoka, La Curacao y más.
+                    Comparamos en tiempo real celulares, laptops, televisores, consolas y miles de productos en Falabella, Ripley, Claro, Entel, PlazaVea, Coolbox, Promart, Oechsle, Hiraoka y más.
                 </p>
 
                 <!-- Search Form -->
@@ -128,7 +128,7 @@
                         <input 
                             type="text" 
                             id="search-input" 
-                            placeholder="Ingresa modelo (ej: iPhone 13, Galaxy S24, Redmi...)"
+                            placeholder="Ingresa producto (ej: iPhone 15, Laptop Lenovo, Smart TV 55, PS5 Slim, S24 FE...)"
                             class="w-full bg-transparent px-2.5 sm:px-3.5 py-3 sm:py-3.5 text-platinum-100 placeholder-platinum-600 focus:outline-none text-xs sm:text-base font-normal min-w-0"
                             autocomplete="off"
                             required
@@ -158,9 +158,9 @@
                 <div class="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 pt-1 text-xs">
                     <span class="text-platinum-600 mr-0.5 sm:mr-1 text-[10px] sm:text-[11px] uppercase tracking-wider">Tendencias:</span>
                     <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="Samsung Galaxy S24 FE">S24 FE</button>
-                    <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="iPhone 13">iPhone 13</button>
-                    <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="Samsung Galaxy S24">Galaxy S24</button>
-                    <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="Xiaomi Redmi Note 13">Redmi Note 13</button>
+                    <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="Laptop Gamer">Laptop Gamer</button>
+                    <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="Smart TV 55">Smart TV 55"</button>
+                    <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="PlayStation 5 Slim">PS5 Slim</button>
                     <button type="button" class="quick-chip text-platinum-400 hover:text-gold-200 bg-obsidian-850 hover:bg-obsidian-800 border border-obsidian-700/80 hover:border-gold-400/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md transition text-[11px] sm:text-xs" data-query="iPhone 15">iPhone 15</button>
                 </div>
             </section>
@@ -377,9 +377,10 @@
                 </div>
             </section>
 
-            <!-- Food Filters & Sorting Bar -->
+            <!-- Food Filters, Localidad & Sorting Bar -->
             <section class="bg-obsidian-900 border border-obsidian-700/70 rounded-xl p-3 sm:p-4 space-y-3 shadow-lg">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                <!-- Top Row: Apps & Platforms + Location Dropdown -->
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs">
                     <!-- Source/Platform Pills -->
                     <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                         <span class="text-platinum-500 font-medium whitespace-nowrap">Canal / App:</span>
@@ -390,16 +391,43 @@
                             <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
                             <span>Yape Promos</span>
                         </button>
+                        <button type="button" class="food-platform-btn px-2.5 py-1 rounded-md border text-xs font-medium transition bg-obsidian-950 border-obsidian-700/70 text-platinum-400 hover:text-orange-400 hover:border-orange-500/40 flex items-center gap-1.5" data-platform="Rappi">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#ff441f]"></span>
+                            <span>Rappi</span>
+                        </button>
                         <button type="button" class="food-platform-btn px-2.5 py-1 rounded-md border text-xs font-medium transition bg-obsidian-950 border-obsidian-700/70 text-platinum-400 hover:text-blue-300 hover:border-blue-500/40 flex items-center gap-1.5" data-platform="App Oficial">
                             <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                             <span>App Oficial</span>
                         </button>
                         <button type="button" class="food-platform-btn px-2.5 py-1 rounded-md border text-xs font-medium transition bg-obsidian-950 border-obsidian-700/70 text-platinum-400 hover:text-gold-300 hover:border-gold-500/40 flex items-center gap-1.5" data-platform="Cuponera">
                             <span class="w-1.5 h-1.5 rounded-full bg-gold-400"></span>
-                            <span>Cuponera / Delivery</span>
+                            <span>Cuponera</span>
                         </button>
                     </div>
 
+                    <!-- Localidad / Distrito Dropdown -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-platinum-500 font-medium whitespace-nowrap flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-gold-400 text-[11px]"></i>
+                            <span>Localidad:</span>
+                        </span>
+                        <select id="food-location-select" class="w-full sm:w-auto bg-obsidian-950 border border-obsidian-700 text-platinum-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-gold-400 font-medium text-xs">
+                            <option value="todas" selected>Todo el Perú (Todas las sedes)</option>
+                            <option value="miraflores">Miraflores / San Isidro / San Borja</option>
+                            <option value="surco">Surco / La Molina</option>
+                            <option value="lima_centro">Lima Centro / Jesús María / Magdalena</option>
+                            <option value="lima_norte">Lima Norte (Los Olivos / Comas / Indep.)</option>
+                            <option value="lima_sur">Lima Sur (Chorrillos / SJM / Barranco)</option>
+                            <option value="lima_este">Lima Este (San Juan de Lurigancho / Ate)</option>
+                            <option value="callao">Callao / Bellavista / San Miguel</option>
+                            <option value="arequipa">Arequipa (Cayma / Cercado)</option>
+                            <option value="trujillo">Trujillo (Centro / El Golf)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Bottom Row: Ordenamiento & Toggle "Solo Ofertas" vs "Carta Completa" -->
+                <div class="border-t border-obsidian-700/50 pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                     <!-- Sort Selector -->
                     <div class="flex items-center gap-2 sm:gap-2.5">
                         <span class="text-platinum-500 font-medium whitespace-nowrap">Ordenar:</span>
@@ -408,6 +436,15 @@
                             <option value="desc">Mayor a menor precio</option>
                             <option value="discount">Mayor descuento (%)</option>
                         </select>
+                    </div>
+
+                    <!-- Catalog Toggle -->
+                    <div class="flex items-center gap-4 text-platinum-400">
+                        <label class="flex items-center gap-2 cursor-pointer select-none hover:text-platinum-200 transition">
+                            <input type="checkbox" id="toggle-food-only-discounts" class="w-3.5 h-3.5 rounded text-gold-500 bg-obsidian-950 border-obsidian-700 focus:ring-0">
+                            <span class="text-xs">Solo ofertas con descuento</span>
+                        </label>
+                        <span class="text-[10px] text-platinum-600 hidden md:inline">• Incluye toda la carta y combos</span>
                     </div>
                 </div>
             </section>

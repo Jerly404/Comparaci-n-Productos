@@ -12,41 +12,58 @@ from scrapers.food_deals import search_food_deals
 
 console = Console()
 
-def show_food_cli(category: str = None, query: str = None, sort_by: str = "asc"):
+def show_food_cli(category: str = None, query: str = None, location: str = None, only_discounts: bool = False, sort_by: str = "asc"):
     clean_cat = category.lower() if category and category.lower() != "todas" else None
-    data = search_food_deals(category=clean_cat, query=query, sort_by=sort_by)
+    data = search_food_deals(category=clean_cat, query=query, location=location, only_discounts=only_discounts, sort_by=sort_by)
     results = data.get("results", [])
     stats = data.get("stats", {})
 
     console.print()
     cat_title = f" - Categoría: {category.capitalize()}" if clean_cat else ""
+    loc_title = f" - Sede: {location.capitalize()}" if location and location != "todas" else ""
     console.print(Panel.fit(
-        f"[bold #dfc38a]ÁREA COMIDAS & YAPE PROMOS PERÚ[/bold #dfc38a]{cat_title}\n"
-        f"[dim #cbd5e1]Promociones verificadas ordenadas estrictamente de menor a mayor precio[/dim #cbd5e1]",
+        f"[bold #dfc38a]ÁREA COMIDAS, RAPPI & YAPE PROMOS PERÚ[/bold #dfc38a]{cat_title}{loc_title}\n"
+        f"[dim #cbd5e1]Carta completa y promociones verificadas ordenadas estrictamente de menor a mayor precio[/dim #cbd5e1]",
         border_style="#8c734b"
     ))
 
     if not results:
-        console.print("[red]No se encontraron promociones para los filtros seleccionados.[/red]\n")
+        console.print("[red]No se encontraron productos o promociones para los filtros seleccionados.[/red]\n")
         return
 
     table = Table(border_style="#334155", box=None)
     table.add_column("#", justify="right", style="dim #64748b", no_wrap=True)
     table.add_column("Precio (PEN)", justify="right", style="bold #dfc38a", no_wrap=True)
-    table.add_column("Dscto", justify="center", style="#dfc38a", no_wrap=True)
+    table.add_column("Dscto / Tipo", justify="center", style="#dfc38a", no_wrap=True)
     table.add_column("Canal / App", style="#cbd5e1", no_wrap=True)
     table.add_column("Marca", style="bold #f8fafc", no_wrap=True)
-    table.add_column("Combo / Promoción", style="#f8fafc")
-    table.add_column("Cupón", justify="center", style="bold #dfc38a", no_wrap=True)
-    table.add_column("Vigencia", style="dim #94a3b8")
+    table.add_column("Combo / Plato", style="#f8fafc")
+    table.add_column("Localidad", style="dim #94a3b8")
+    table.add_column("Cupón / Tiempo", justify="center", style="bold #dfc38a", no_wrap=True)
 
     for i, item in enumerate(results, 1):
         price_str = f"S/ {item['price']:,.2f}"
-        discount_str = f"-{item['discount_percent']}%" if item.get("discount_percent") else "-"
-        coupon_str = item["coupon_code"] if item.get("coupon_code") else "-"
-        
+        if item.get("discount_percent"):
+            discount_str = f"-{item['discount_percent']}%"
+        else:
+            discount_str = "[dim #94a3b8]Carta[/dim #94a3b8]"
+
+        if item.get("coupon_code"):
+            info_str = f"[bold #dfc38a]{item['coupon_code']}[/bold #dfc38a]"
+        else:
+            info_str = f"[dim #94a3b8]{item.get('delivery_time', '-')}[/dim #94a3b8]"
+
         is_yape = "Yape" in item["platform"]
-        plat_styled = f"[bold #a855f7]{item['platform']}[/bold #a855f7]" if is_yape else f"[#cbd5e1]{item['platform']}[/#cbd5e1]"
+        is_rappi = "Rappi" in item["platform"]
+
+        if is_rappi:
+            plat_styled = f"[bold #ff441f]{item['platform']}[/bold #ff441f]"
+        elif is_yape:
+            plat_styled = f"[bold #a855f7]{item['platform']}[/bold #a855f7]"
+        else:
+            plat_styled = f"[#cbd5e1]{item['platform']}[/#cbd5e1]"
+
+        short_loc = item.get("location", "Nacional").split("(")[0].strip()
 
         if i == 1:
             table.add_row(
@@ -56,8 +73,8 @@ def show_food_cli(category: str = None, query: str = None, sort_by: str = "asc")
                 plat_styled,
                 f"[bold #f8fafc]{item['brand']}[/bold #f8fafc]",
                 f"[bold #f8fafc]{item['title']}[/bold #f8fafc]",
-                f"[bold #dfc38a]{coupon_str}[/bold #dfc38a]",
-                item["expiration"]
+                short_loc,
+                info_str
             )
         else:
             table.add_row(
@@ -67,13 +84,13 @@ def show_food_cli(category: str = None, query: str = None, sort_by: str = "asc")
                 plat_styled,
                 item["brand"],
                 item["title"],
-                coupon_str,
-                item["expiration"]
+                short_loc,
+                info_str
             )
 
     console.print(table)
     console.print(
-        f"\n[dim #64748b]Total: {stats['total_results']} promociones. "
+        f"\n[dim #64748b]Total: {stats['total_results']} opciones listadas. "
         f"Menor: S/ {stats['lowest_price']:,.2f}  •  Promedio: S/ {stats['average_price']:,.2f}  •  Mayor: S/ {stats['highest_price']:,.2f}[/dim #64748b]\n"
     )
 
@@ -122,20 +139,22 @@ def show_events_cli():
 
 async def run_cli():
     parser = argparse.ArgumentParser(
-        description="BuscaFono CLI - Comparador de precios de celulares y calendario de ofertas en Perú"
+        description="BuscaProductos CLI - Comparador de precios de productos, tecnología y comidas en Perú"
     )
-    parser.add_argument("query", nargs="?", default=None, type=str, help="Modelo de celular a buscar (ej: 'iPhone 13', 'Samsung S24')")
-    parser.add_argument("--food", nargs="?", const="todas", default=None, help="Ver ofertas de comidas y Yape Promos (ej: --food, --food pizza, --food burger)")
+    parser.add_argument("query", nargs="?", default=None, type=str, help="Producto a buscar (ej: 'iPhone 15', 'Laptop Lenovo', 'Smart TV 55', 'PS5')")
+    parser.add_argument("--food", nargs="?", const="todas", default=None, help="Ver comidas, Rappi y Yape Promos (ej: --food, --food pizza, --food burger)")
+    parser.add_argument("--location", type=str, default=None, help="Localidad o distrito (ej: miraflores, surco, lima_norte, arequipa)")
+    parser.add_argument("--only-discounts", action="store_true", help="Mostrar solo ofertas con descuento en comidas")
     parser.add_argument("--events", action="store_true", help="Mostrar calendario de Black Friday, Cyber Wow y fechas de ofertas")
     parser.add_argument("--limit", type=int, default=20, help="Límite de resultados a mostrar (default: 20)")
-    parser.add_argument("--no-refurbished", action="store_true", help="Excluir celulares reacondicionados")
+    parser.add_argument("--no-refurbished", action="store_true", help="Excluir productos reacondicionados")
     parser.add_argument("--stores", type=str, default=None, help="Tiendas separadas por comas")
     parser.add_argument("--order", choices=["asc", "desc", "discount"], default="asc", help="Orden de precios (default: asc = menor a mayor)")
 
     args = parser.parse_args()
 
     if args.food is not None:
-        show_food_cli(category=args.food, query=args.query, sort_by=args.order)
+        show_food_cli(category=args.food, query=args.query, location=args.location, only_discounts=args.only_discounts, sort_by=args.order)
         return
 
     if args.events:
@@ -144,15 +163,15 @@ async def run_cli():
 
     if not args.query:
         show_events_cli()
-        console.print("[dim #64748b]Para buscar celulares: [white]python cli.py 'modelo'[/white] (ej: python cli.py 'iPhone 13')[/dim #64748b]")
-        console.print("[dim #64748b]Para ver comidas & Yape: [white]python cli.py --food[/white] o [white]python cli.py --food pizza[/white][/dim #64748b]\n")
+        console.print("[dim #64748b]Para buscar productos: [white]python cli.py 'producto'[/white] (ej: python cli.py 'Laptop Lenovo', 'Smart TV 55', 'iPhone 15')[/dim #64748b]")
+        console.print("[dim #64748b]Para ver comidas & Rappi: [white]python cli.py --food[/white] o [white]python cli.py --food pizza --location miraflores[/white][/dim #64748b]\n")
         return
 
     selected_stores = [s.strip().lower() for s in args.stores.split(",")] if args.stores else None
 
     console.print()
     console.print(Panel.fit(
-        f"[bold #dfc38a]BUSCAFONO[/bold #dfc38a] [dim #94a3b8]| Comparador de Precios[/dim #94a3b8]\n"
+        f"[bold #dfc38a]BUSCAPRODUCTOS[/bold #dfc38a] [dim #94a3b8]| Comparador de Precios Perú[/dim #94a3b8]\n"
         f"[dim #64748b]Búsqueda:[/dim #64748b] [bold #f8fafc]{args.query}[/bold #f8fafc]  [dim #64748b]•[/dim #64748b]  [dim #64748b]Orden:[/dim #64748b] [#dfc38a]Menor a mayor[/] [dim #64748b](12 tiendas)[/dim #64748b]",
         border_style="#8c734b"
     ))

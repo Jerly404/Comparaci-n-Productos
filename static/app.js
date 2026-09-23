@@ -11,6 +11,8 @@ const state = {
     activeView: "comparator",
     foodCategory: "todas",
     foodPlatform: "todas",
+    foodLocation: "todas",
+    foodOnlyDiscounts: false,
     foodQuery: "",
     foodSort: "asc",
     foodDeals: [],
@@ -60,10 +62,12 @@ const statHighest = document.getElementById("stat-highest");
 const statTotal = document.getElementById("stat-total");
 const resultsCountBadge = document.getElementById("results-count-badge");
 
-// DOM Elements - Food Deals & Yape Promos
+// DOM Elements - Food Deals, Rappi & Yape Promos
 const foodSearchInput = document.getElementById("food-search-input");
 const foodClearBtn = document.getElementById("food-clear-btn");
 const foodSortSelect = document.getElementById("food-sort-select");
+const foodLocationSelect = document.getElementById("food-location-select");
+const toggleFoodOnlyDiscounts = document.getElementById("toggle-food-only-discounts");
 const foodGrid = document.getElementById("food-grid");
 const foodSpotlightContainer = document.getElementById("food-spotlight-container");
 const foodResultsContainer = document.getElementById("food-results-container");
@@ -646,7 +650,7 @@ function escapeHtml(text) {
 }
 
 // =========================================================
-// FOOD DEALS & YAPE PROMOS SECTION
+// FOOD DEALS, RAPPI & YAPE PROMOS SECTION
 // =========================================================
 
 async function fetchFoodDeals() {
@@ -657,6 +661,12 @@ async function fetchFoodDeals() {
         }
         if (state.foodPlatform && state.foodPlatform !== "todas") {
             params.append("platform", state.foodPlatform);
+        }
+        if (state.foodLocation && state.foodLocation !== "todas") {
+            params.append("location", state.foodLocation);
+        }
+        if (state.foodOnlyDiscounts) {
+            params.append("only_discounts", "true");
         }
         if (state.foodQuery && state.foodQuery.trim()) {
             params.append("q", state.foodQuery.trim());
@@ -710,12 +720,25 @@ function renderFoodDeals() {
     if (foodStatAvg) foodStatAvg.textContent = formatPrice(state.foodStats.average_price);
     if (foodStatHighest) foodStatHighest.textContent = formatPrice(state.foodStats.highest_price);
     if (foodStatTotal) foodStatTotal.textContent = String(state.foodStats.total_results);
-    if (foodCountBadge) foodCountBadge.textContent = `${state.foodDeals.length} promociones`;
+    if (foodCountBadge) {
+        const locLabel = (foodLocationSelect && foodLocationSelect.selectedOptions[0]) 
+            ? foodLocationSelect.selectedOptions[0].text 
+            : "Nacional";
+        foodCountBadge.textContent = `${state.foodDeals.length} opciones (${locLabel.split('(')[0].trim()})`;
+    }
 
     // 2. Spotlight Best Food Deal Card
     const cheapest = state.foodStats.cheapest_item || state.foodDeals[0];
     if (foodSpotlightContainer && cheapest) {
         const hasCoupon = Boolean(cheapest.coupon_code);
+        const isRappi = cheapest.platform.includes("Rappi");
+        const isYape = cheapest.platform.includes("Yape");
+        const actionText = isRappi ? "Pedir en Rappi" : (isYape ? "Aprovechar en Yape" : `Ver en ${cheapest.brand}`);
+
+        let platBadgeStyle = 'bg-obsidian-850 text-platinum-300 border-obsidian-700';
+        if (isRappi) platBadgeStyle = 'bg-[#ff441f]/20 text-[#ff7051] border-[#ff441f]/40 font-semibold';
+        else if (isYape) platBadgeStyle = 'bg-purple-950/80 text-purple-200 border-purple-500/40';
+
         foodSpotlightContainer.innerHTML = `
             <div class="best-deal-luxury rounded-xl p-3.5 sm:p-5 flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-5 h-full">
                 <div class="w-28 h-28 xs:w-32 xs:h-32 sm:w-40 sm:h-40 flex-shrink-0 bg-obsidian-950 rounded-lg p-1.5 border border-gold-400/30 overflow-hidden flex items-center justify-center">
@@ -731,14 +754,18 @@ function renderFoodDeals() {
                     <div>
                         <div class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
                             <span class="text-[9px] sm:text-[10px] font-semibold text-gold-300 bg-gold-900/60 border border-gold-400/40 px-2 py-0.5 rounded uppercase tracking-wider">
-                                Mejor Precio Comidas
+                                Mejor Precio
                             </span>
-                            <span class="text-[10px] sm:text-[11px] font-medium text-purple-200 bg-purple-950/80 border border-purple-500/40 px-2 py-0.5 rounded flex items-center gap-1.5">
+                            <span class="text-[10px] sm:text-[11px] px-2 py-0.5 rounded border flex items-center gap-1.5 ${platBadgeStyle}">
                                 <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${cheapest.platform_color}"></span>
                                 ${cheapest.platform}
                             </span>
                             <span class="text-[10px] sm:text-[11px] font-medium text-platinum-300 bg-obsidian-850 border border-obsidian-700 px-2 py-0.5 rounded">
                                 ${cheapest.brand}
+                            </span>
+                            <span class="text-[10px] text-platinum-400 bg-obsidian-950 border border-obsidian-700 px-2 py-0.5 rounded flex items-center gap-1">
+                                <i class="fa-solid fa-location-dot text-gold-400 text-[9px]"></i>
+                                ${cheapest.location}
                             </span>
                         </div>
 
@@ -763,7 +790,15 @@ function renderFoodDeals() {
                                 <span class="text-xs text-gold-400 font-semibold bg-gold-900/40 border border-gold-400/30 px-1.5 py-0.5 rounded">
                                     -${cheapest.discount_percent}% de descuento
                                 </span>
-                            ` : ''}
+                            ` : `
+                                <span class="text-[10px] text-platinum-400 bg-obsidian-950 border border-obsidian-700 px-1.5 py-0.5 rounded">
+                                    Carta Regular
+                                </span>
+                            `}
+                            <span class="text-[10px] text-platinum-500 flex items-center gap-1">
+                                <i class="fa-regular fa-clock text-gold-400/80 text-[9px]"></i>
+                                ${cheapest.delivery_time}
+                            </span>
                         </div>
                     </div>
 
@@ -786,7 +821,7 @@ function renderFoodDeals() {
                             rel="noopener noreferrer"
                             class="btn-gold px-4 py-2 rounded-lg text-xs uppercase tracking-wider inline-flex items-center justify-center gap-2 shadow-md flex-1 sm:flex-initial"
                         >
-                            <span>Aprovechar oferta en ${cheapest.brand}</span>
+                            <span>${actionText}</span>
                             <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                         </a>
                     </div>
@@ -795,7 +830,7 @@ function renderFoodDeals() {
         `;
     }
 
-    // 3. Render Food Cards Grid
+    // 3. Render Food Cards Grid (Ranked lowest to highest)
     foodGrid.innerHTML = "";
     state.foodDeals.forEach((deal, index) => {
         const card = document.createElement("div");
@@ -803,6 +838,13 @@ function renderFoodDeals() {
 
         const isRank1 = (index === 0 && (state.foodSort || "asc") === "asc");
         const hasCoupon = Boolean(deal.coupon_code);
+        const isRappi = deal.platform.includes("Rappi");
+        const isYape = deal.platform.includes("Yape");
+        const btnText = isRappi ? "Pedir en Rappi" : (isYape ? "Ver en Yape" : `Ver en ${deal.brand}`);
+
+        let platBadgeClass = "bg-obsidian-950 text-platinum-400 border border-obsidian-700/60";
+        if (isRappi) platBadgeClass = "bg-[#ff441f]/20 text-[#ff7051] border border-[#ff441f]/40 font-semibold";
+        else if (isYape) platBadgeClass = "bg-purple-950/80 text-purple-300 border border-purple-500/40";
 
         card.innerHTML = `
             <div>
@@ -820,29 +862,36 @@ function renderFoodDeals() {
                         ` : `
                             <span class="text-platinum-500 font-medium text-[10px]">#${index + 1}</span>
                         `}
-                        <span class="text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded font-medium ${
-                            deal.platform.includes('Yape') 
-                                ? 'bg-purple-950/80 text-purple-300 border border-purple-500/40' 
-                                : 'bg-obsidian-950 text-platinum-400 border border-obsidian-700/60'
-                        }">
+                        <span class="text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded font-medium ${platBadgeClass}">
                             ${deal.platform}
                         </span>
                     </div>
                 </div>
 
                 <!-- Food Image Thumbnail -->
-                <div class="w-full h-32 xs:h-36 sm:h-40 bg-obsidian-950 rounded-lg mb-2.5 sm:mb-3 overflow-hidden border border-obsidian-700/50 relative group">
+                <div class="w-full h-32 xs:h-36 sm:h-40 bg-obsidian-950 rounded-lg mb-2 sm:mb-2.5 overflow-hidden border border-obsidian-700/50 relative group">
                     <img 
                         src="${deal.image_url || DEFAULT_IMAGE_FALLBACK}" 
                         alt="${escapeHtml(deal.title)}"
                         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         onerror="this.src='${DEFAULT_IMAGE_FALLBACK}'"
                     />
-                    <div class="absolute top-2 left-2">
+                    <div class="absolute top-2 left-2 flex flex-col gap-1">
                         <span class="text-[9px] font-medium px-2 py-0.5 rounded-md bg-obsidian-950/85 backdrop-blur-sm border border-obsidian-700 text-platinum-300">
                             ${escapeHtml(deal.category_name)}
                         </span>
                     </div>
+                    <div class="absolute bottom-2 right-2">
+                        <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-obsidian-950/90 text-platinum-400 border border-obsidian-700/80">
+                            ${deal.delivery_time}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Location tag -->
+                <div class="flex items-center gap-1 text-[10px] text-platinum-500 mb-1.5 truncate">
+                    <i class="fa-solid fa-location-dot text-gold-400 text-[9px] flex-shrink-0"></i>
+                    <span class="truncate">${deal.location}</span>
                 </div>
 
                 <!-- Title & Description -->
@@ -875,7 +924,11 @@ function renderFoodDeals() {
                         <span class="text-[9px] sm:text-[10px] font-semibold text-gold-300 bg-gold-900/40 border border-gold-400/30 px-1.5 py-0.5 rounded">
                             -${deal.discount_percent}%
                         </span>
-                    ` : ''}
+                    ` : `
+                        <span class="text-[9px] text-platinum-500 bg-obsidian-950 border border-obsidian-700/70 px-1.5 py-0.5 rounded">
+                            Carta regular
+                        </span>
+                    `}
                 </div>
 
                 <!-- Coupon Code if available -->
@@ -907,10 +960,10 @@ function renderFoodDeals() {
                     href="${deal.deal_url}" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    class="btn-platinum-outline w-full flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 sm:py-2 rounded-lg"
+                    class="${isRappi ? 'bg-[#ff441f]/20 hover:bg-[#ff441f]/30 border border-[#ff441f]/40 text-[#ff7051]' : 'btn-platinum-outline'} w-full flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 sm:py-2 rounded-lg transition"
                 >
-                    <span>Ver en ${deal.brand}</span>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-platinum-400"></i>
+                    <span>${btnText}</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
                 </a>
             </div>
         `;
@@ -952,7 +1005,23 @@ function setupFoodEventListeners() {
         });
     });
 
-    // 3. Food Search Input
+    // 3. Localidad / Distrito Select
+    if (foodLocationSelect) {
+        foodLocationSelect.addEventListener("change", (e) => {
+            state.foodLocation = e.target.value;
+            fetchFoodDeals();
+        });
+    }
+
+    // 4. Toggle Solo Ofertas vs Carta Completa
+    if (toggleFoodOnlyDiscounts) {
+        toggleFoodOnlyDiscounts.addEventListener("change", (e) => {
+            state.foodOnlyDiscounts = e.target.checked;
+            fetchFoodDeals();
+        });
+    }
+
+    // 5. Food Search Input
     let searchDebounceTimer;
     if (foodSearchInput) {
         foodSearchInput.addEventListener("input", () => {
@@ -981,7 +1050,7 @@ function setupFoodEventListeners() {
         });
     }
 
-    // 4. Food Sort Select
+    // 6. Food Sort Select
     if (foodSortSelect) {
         foodSortSelect.addEventListener("change", (e) => {
             state.foodSort = e.target.value;
