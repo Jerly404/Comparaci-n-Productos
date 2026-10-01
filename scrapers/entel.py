@@ -52,7 +52,8 @@ class EntelScraper(BaseScraper):
 
     def _fetch_product_details_sync(self, title: str, link: str) -> Optional[ProductItem]:
         try:
-            req = urllib.request.Request(link, headers=self._headers)
+            safe_link = urllib.parse.quote(link.strip(), safe=":/?#[]@!$&'()*+,;=")
+            req = urllib.request.Request(safe_link, headers=self._headers)
             with urllib.request.urlopen(req, timeout=8, context=self._ssl_ctx) as resp:
                 html = resp.read().decode("utf-8", errors="ignore")
 

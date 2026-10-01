@@ -1,20 +1,21 @@
 import re
-from typing import List
+from typing import List, Optional
 
 # Words indicating true device accessories/parts that should be filtered out when hide_accessories is active
 ACCESSORY_KEYWORDS = [
-    "funda", "case", "carcasa", "cover", "protector", "estuche", "skin",
-    "cargador", "charger", "cable", "adaptador", "adapter",
-    "mica", "vidrio templado", "tempered glass", "lamina", "lámina", "hidrogel",
-    "soporte para auto", "soporte", "holder", "tripode", "trípode",
+    "funda", "fundas", "case", "cases", "carcasa", "carcasas", "cover", "protector", "protectores", "estuche", "skin",
+    "cargador", "cargadores", "charger", "cable", "cables", "adaptador", "adapter", "dock",
+    "mica", "micas", "vidrio templado", "tempered glass", "lamina", "lámina", "hidrogel",
+    "soporte para auto", "soporte", "holder", "tripode", "trípode", "ring", "anillo",
     "bateria externa", "batería externa", "powerbank", "power bank",
     "repuesto", "pantalla de repuesto", "pantalla lcd", "display", "bateria para", "batería para",
-    "tapa trasera", "flex", "conector", "correa para reloj", "lente de camara", "lente para cámara"
+    "tapa trasera", "flex", "conector", "correa para reloj", "correa", "lente de camara", "lente para cámara",
+    "kit de video", "kit", "filtro nd", "filtro", "jaula", "rig", "parasol"
 ]
 
 GENERIC_STOP_WORDS = {
     'de', 'el', 'la', 'con', 'para', 'en', 'los', 'las', 'un', 'una',
-    'nuevo', 'original', 'producto', 'tienda'
+    'nuevo', 'original', 'producto', 'tienda', 'color'
 }
 
 FASHION_KEYWORDS = [
@@ -35,6 +36,56 @@ PHONE_KEYWORDS = [
     "iphone", "galaxy", "xiaomi", "redmi", "poco", "motorola", "moto", "oppo", "honor",
     "realme", "pixel"
 ]
+
+KNOWN_BRANDS_AND_DEVICES = {
+    "iphone": ["iphone", "apple"],
+    "ipad": ["ipad", "apple"],
+    "macbook": ["macbook", "apple"],
+    "airpods": ["airpods", "apple"],
+    "apple watch": ["apple watch", "watch", "apple"],
+    "samsung": ["samsung", "galaxy"],
+    "galaxy": ["samsung", "galaxy"],
+    "xiaomi": ["xiaomi", "redmi", "poco"],
+    "redmi": ["redmi", "xiaomi"],
+    "poco": ["poco", "xiaomi"],
+    "motorola": ["motorola", "moto"],
+    "moto": ["motorola", "moto"],
+    "oppo": ["oppo"],
+    "honor": ["honor"],
+    "pixel": ["pixel", "google"],
+    "huawei": ["huawei"],
+    "playstation": ["playstation", "ps5", "ps4"],
+    "ps5": ["ps5", "playstation 5", "playstation"],
+    "ps4": ["ps4", "playstation 4", "playstation"],
+    "nintendo": ["nintendo", "switch"],
+    "switch": ["nintendo", "switch"],
+    "xbox": ["xbox"],
+    "jbl": ["jbl"],
+    "bose": ["bose"],
+    "sony": ["sony"],
+    "lenovo": ["lenovo"],
+    "asus": ["asus"],
+    "acer": ["acer"],
+    "hp": ["hp"],
+    "dell": ["dell"],
+    "lg": ["lg"],
+    "tcl": ["tcl"],
+    "hisense": ["hisense"],
+    "ralph lauren": ["ralph lauren", "lauren"],
+    "polo ralph lauren": ["ralph lauren", "lauren"],
+    "hm": ["hm", "h&m"],
+    "h&m": ["hm", "h&m"],
+    "topitop": ["topitop"],
+    "zara": ["zara"],
+    "mango": ["mango"],
+    "nike": ["nike"],
+    "adidas": ["adidas"],
+    "puma": ["puma"],
+    "reebok": ["reebok"],
+    "marathon": ["marathon"]
+}
+
+KEY_QUALIFIERS = {'fe', 'pro', 'ultra', 'plus', 'max', 'mini', 'lite'}
 
 def clean_text(text: str) -> str:
     """Normalize text by lowering, stripping accents and standardizing spacing."""
@@ -75,56 +126,56 @@ def is_phone_accessory(title: str, query: str) -> bool:
 
     for word in ACCESSORY_KEYWORDS:
         clean_word = clean_text(word)
-        if clean_word in norm_title:
-            if clean_word in norm_query:
-                continue
-            return True
+        if re.search(r'\b' + re.escape(clean_word) + r'\b', norm_title):
+            if not re.search(r'\b' + re.escape(clean_word) + r'\b', norm_query):
+                return True
     return False
 
 def matches_query_keywords(title: str, query: str, brand: str = "") -> bool:
     """
     Ensures that key terms from the query are present in the title or brand.
-    Handles brand names, model numbers, and multi-word product names gracefully.
+    Enforces brand identity, model numbers, and qualifiers using strict whole-word matching.
     """
     full_text = f"{title} {brand}".strip() if brand else title
     norm_title = clean_text(full_text)
     norm_query = clean_text(query)
 
-    # Split into meaningful tokens excluding generic words
+    # 1. Enforce known brand / primary device constraint
+    for key, synonyms in KNOWN_BRANDS_AND_DEVICES.items():
+        if re.search(r'\b' + re.escape(key) + r'\b', norm_query):
+            if not any(re.search(r'\b' + re.escape(syn) + r'\b', norm_title) for syn in synonyms):
+                return False
+
+    # 2. Number / model constraint (e.g. '15' in iPhone 15, '24' in S24, '5' in PS5)
+    num_tokens = re.findall(r'\b\d+\b', norm_query)
+    for n in num_tokens:
+        if not re.search(r'\b' + n + r'\b', norm_title):
+            return False
+        # If all matches of this number in the title are followed by measurement units (kg, libras, horas, etc.), reject
+        all_matches = list(re.finditer(r'\b' + n + r'\b', norm_title))
+        unit_matches = list(re.finditer(r'\b' + n + r'\s*(?:kg|kilos?|libras?|lbs?|horas?|hrs?|g|mg|watts?|w|ml|oz|cm|mm|m)\b', norm_title))
+        if len(all_matches) == len(unit_matches):
+            return False
+
+    # 3. Model qualifiers (fe, pro, ultra, plus, max, mini, lite) - MUST match as whole word
+    for qual in KEY_QUALIFIERS:
+        if re.search(r'\b' + qual + r'\b', norm_query):
+            if not re.search(r'\b' + qual + r'\b', norm_title):
+                return False
+
+    # 4. Textual tokens check (excluding stopwords and numeric tokens)
     raw_tokens = re.split(r'\s+', norm_query)
-    tokens = [t for t in raw_tokens if len(t) >= 2 and t not in GENERIC_STOP_WORDS]
-    if not tokens:
-        tokens = [t for t in raw_tokens if len(t) >= 2]
+    tokens = [t for t in raw_tokens if len(t) >= 2 and t not in GENERIC_STOP_WORDS and not re.search(r'^\d+$', t)]
     if not tokens:
         return True
 
-    # 1. Model number checks (e.g. '13', 's24', 's24fe', '15')
-    numeric_tokens = [t for t in tokens if re.search(r'\d', t)]
-    for num_token in numeric_tokens:
-        digit_only = re.sub(r'\D', '', num_token)
-        if num_token not in norm_title and digit_only not in norm_title:
-            return False
+    matched_count = 0
+    for t in tokens:
+        if re.search(r'\b' + re.escape(t) + r'\b', norm_title):
+            matched_count += 1
 
-    # 2. Textual tokens check (e.g. 'samsung', 'galaxy', 'polo', 'ralph', 'lauren')
-    text_tokens = [t for t in tokens if not re.search(r'^\d+$', t) and t not in numeric_tokens]
-    if not text_tokens:
-        return True
-
-    # Check how many key text tokens appear in title or brand
-    matched_count = sum(1 for t in text_tokens if t in norm_title)
-
-    # Special qualifiers like 'fe', 'pro', 'ultra', 'plus', 'max', 'mini', 'lite'
-    key_qualifiers = {'fe', 'pro', 'ultra', 'plus', 'max', 'mini', 'lite'}
-    for qual in key_qualifiers:
-        if qual in text_tokens and qual not in norm_title:
-            return False
-
-    # If 1 text token, it must match
-    if len(text_tokens) == 1:
-        return matched_count >= 1
-
-    # If multiple text tokens, at least 50% must match (e.g. "polo ralph lauren" or "samsung galaxy s24")
-    return (matched_count / len(text_tokens)) >= 0.50
+    # Require high match percentage for non-stopwords
+    return (matched_count / len(tokens)) >= 0.70
 
 def detect_condition(title: str) -> str:
     """Detects whether product is new, refurbished, or open box."""
@@ -141,17 +192,29 @@ def is_valid_phone_item(title: str, query: str, price: float, brand: str = "", h
     phone_search = is_phone_query(query)
     fashion_search = is_fashion_query(query)
 
-    # Phone accessories are only filtered out if this is actually a phone search
+    # First verify keyword & brand & model relevance
+    if not matches_query_keywords(title, query, brand=brand):
+        return False
+
+    # Phone accessories filtering
     if hide_accessories and phone_search and not fashion_search:
         if is_phone_accessory(title, query):
             return False
         norm_query = clean_text(query)
         is_accessory_query = any(clean_text(w) in norm_query for w in ACCESSORY_KEYWORDS)
-        if not is_accessory_query and price < min_price:
+
+        # Flagship phones have higher realistic price floors
+        flagship_min = min_price
+        if re.search(r'\biphone\s*(?:1[3-6]|x[sr]?)\b', norm_query):
+            flagship_min = 600.0  # An iPhone 13-16 device is never < S/ 600 (accessories slip in otherwise)
+        elif re.search(r'\bs2[3-5]\b', norm_query):
+            flagship_min = 500.0
+
+        if not is_accessory_query and price < flagship_min:
             return False
     elif not phone_search or fashion_search:
         # For fashion and general products, valid items can be affordable (e.g. S/ 5 - 100)
         if price < 2.0:
             return False
 
-    return matches_query_keywords(title, query, brand=brand)
+    return True

@@ -1,124 +1,61 @@
-# 📱 BuscaFono Perú - Comparador de Precios de Celulares
+# ComparaYa Perú
 
-Sistema inteligente y concurrente que busca cualquier modelo de teléfono celular en las principales tiendas de retail de Perú y lista los resultados ordenados estrictamente de **menor precio a mayor precio**, destacando la mejor oferta y permitiendo compras directas al precio más bajo.
+Comparador web de precios que consulta en paralelo las principales tiendas peruanas, ordena las ofertas y envía al usuario directamente a la tienda elegida.
 
----
+## Funciones
 
-## 🏬 Tiendas Integradas en Tiempo Real
+- Búsqueda concurrente en 14 tiendas.
+- Filtros por tienda, ubicación, descuento, accesorios y condición.
+- Mejor oferta, precio promedio y ahorro posible.
+- Favoritos persistentes en el navegador y comparación de hasta tres productos.
+- Exportación CSV, diseño responsive y API documentada en `/docs`.
+- Compresión HTTP y caché temporal de búsquedas repetidas.
 
-El sistema realiza búsquedas asíncronas y simultáneas en:
+## Ejecutar localmente
 
-1. **Falabella Perú** (`falabella.com.pe`)
-2. **Ripley Perú** (`ripley.com.pe`)
-3. **PlazaVea** (`plazavea.com.pe`)
-4. **Claro Perú** (`tiendaclaro.pe`)
-5. **Entel Perú** (`entel.pe` / `miportal.entel.pe`)
-6. **Coolbox Perú** (`coolbox.pe`)
-7. **Hiraoka** (`hiraoka.com.pe`)
-8. **La Curacao** (`lacuracao.pe`)
-9. **Tiendas EFE** (`efe.com.pe`)
-10. **Oechsle** (`oechsle.pe`)
-11. **Promart** (`promart.pe`)
-12. **Shopstar** (`shopstar.pe`)
-
----
-
-## ✨ Características Principales
-
-- **Orden Estricto por Precio**: Por defecto, los resultados se ordenan de menor a mayor precio (`S/`), permitiendo encontrar de inmediato el celular más barato.
-- **Card de Mejor Oferta (#1 Más Barato)**: Destaca visualmente el teléfono con el precio más bajo entre todas las tiendas, mostrando el ahorro estimado frente al promedio del mercado.
-- **Filtrado Inteligente de Accesorios**: Elimina automáticamente fundas, protectores, cables, cargadores, micas, monitores y repuestos para asegurar que solo veas teléfonos reales (a menos que busques un accesorio explícitamente).
-- **Detección de Condición**: Identifica y etiqueta si el celular es **Nuevo** o **Reacondicionado**, permitiendo filtrar según tu preferencia.
-- **Filtros por Tienda y Rango de Precio**: Selecciona o deselecciona tiendas específicas según tus tiendas de confianza.
-- **Doble Interfaz**:
-  - **Interfaz Web Moderna**: Diseñada con Tailwind CSS, tema oscuro elegante, imágenes de alta resolución, estadísticas en vivo y exportación a CSV.
-  - **CLI Interactivo (Terminal)**: Ideal para terminales como Kitty, mostrando tablas estilizadas con colores y emojis usando Python `Rich`.
-
----
-
-## 🚀 Instalación y Puesta en Marcha
-
-### 1. Requisitos
-- Python 3.10+ (probado en Python 3.14 en Arch Linux)
-
-### 2. Configuración del entorno
-```bash
-cd /home/jerly404/dev/comparador-precios-celulares
-# El entorno virtual ya se encuentra creado en ./venv
-# Si deseas reinstalar dependencias:
-./venv/bin/pip install -r requirements.txt
-```
-
----
-
-## 🌐 1. Iniciar la Interfaz Web
-
-Para iniciar el servidor web:
+Requiere Python 3.10 o superior.
 
 ```bash
-./venv/bin/python main.py
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload
 ```
 
-Luego abre tu navegador en:
-👉 **[http://localhost:8000](http://localhost:8000)**
+Abre `http://localhost:8000`. Comprueba el servicio en `http://localhost:8000/api/health`.
 
-### ¿Qué puedes hacer en la Web?
-- Escribir cualquier modelo de teléfono (ej. `iPhone 13`, `Galaxy S24`, `Xiaomi Redmi Note 13`, `POCO X6 Pro`).
-- Ver en segundos todas las ofertas ordenadas de menor a mayor.
-- Ver la tarjeta destacada **"Mejor Oferta Encontrada"** con enlace directo a la tienda.
-- Filtrar por tiendas específicas (Falabella, Ripley, etc.).
-- Descargar la comparativa completa a un archivo **CSV**.
+## Publicar gratis en Render
 
----
+El repositorio incluye `render.yaml`, por lo que no hace falta configurar comandos manualmente.
 
-## 💻 2. Uso desde la Terminal (CLI)
+1. Sube este proyecto a GitHub:
 
-Ideal para consultas ultrarrápidas desde Kitty:
+   ```bash
+   git add .
+   git commit -m "Mejora diseño y prepara despliegue"
+   git branch -M main
+   git remote add origin https://github.com/Jerly404/Comparaci-n-Productos.git
+   git push -u origin main
+   ```
 
-```bash
-# Búsqueda básica ordenada de menor a mayor
-./venv/bin/python cli.py "iPhone 13"
+   Si `origin` ya existe, omite el comando `git remote add origin`.
 
-# Buscar excluyendo teléfonos reacondicionados
-./venv/bin/python cli.py "Samsung S24" --no-refurbished
+2. Crea una cuenta en [Render](https://render.com), selecciona **New → Blueprint** y conecta el repositorio.
+3. Confirma el servicio `comparaya-peru`. Render detectará el plan gratuito y publicará una URL `*.onrender.com`.
+4. Cuando el estado sea **Live**, abre la URL y prueba una búsqueda.
 
-# Limitar a las 10 mejores ofertas
-./venv/bin/python cli.py "Xiaomi Redmi Note 13" --limit 10
+Render apaga los servicios gratuitos tras 15 minutos sin tráfico. La primera visita posterior puede tardar cerca de un minuto; las siguientes serán rápidas. Para un comparador de uso personal o demostración es una buena opción porque FastAPI necesita un servidor y no puede alojarse únicamente en GitHub Pages.
 
-# Filtrar solo ciertas tiendas (ej: Ripley y PlazaVea)
-./venv/bin/python cli.py "iPhone 15" --stores ripley,plazavea
+## Estructura
+
+```text
+main.py              API FastAPI y frontend
+static/              HTML, CSS y JavaScript sin dependencias externas
+scrapers/            conectores y normalización de productos
+render.yaml          despliegue gratuito reproducible
+requirements.txt     dependencias Python
 ```
 
----
+## Aviso
 
-## 🛠️ Arquitectura del Proyecto
-
-```
-comparador-precios-celulares/
-├── scrapers/
-│   ├── base.py              # Modelo de datos ProductItem y BaseScraper
-│   ├── filter_utils.py      # Filtros de accesorios, relevancia y condición
-│   ├── falabella.py         # Scraper de Falabella Perú
-│   ├── ripley.py            # Scraper de Ripley Perú
-│   ├── vtex_base.py         # Scraper base para tiendas VTEX
-│   ├── plazavea.py          # Scraper de PlazaVea
-│   ├── coolbox.py           # Scraper de Coolbox
-│   ├── oechsle.py           # Scraper de Oechsle
-│   ├── promart.py           # Scraper de Promart
-│   ├── hiraoka.py           # Scraper de Hiraoka
-│   └── manager.py           # Orquestador asíncrono y calculador de métricas
-├── static/
-│   ├── index.html           # Frontend web responsivo con Tailwind CSS
-│   ├── app.js               # Lógica cliente y consumo de API
-│   └── style.css            # Estilos y animaciones
-├── main.py                  # API FastAPI y servidor de archivos estáticos
-├── cli.py                   # Herramienta de línea de comandos con Rich
-├── requirements.txt
-└── README.md
-```
-
----
-
-## 📄 Licencia
-
-MIT - Desarrollado para uso libre y personal.
+Los precios, stock, envío y medios de pago pueden cambiar en la tienda. ComparaYa no procesa pagos: solo organiza información pública y enlaza al comercio.
